@@ -1,0 +1,62 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────
+#  PyOutage — Power Cut Tracker
+#
+#  Services:
+#    poller  — pings smart plug every 5s, writes to SQLite
+#    web     — Flask dashboard, accessible on LAN
+#
+#  Shared volume: pyoutage-data  (SQLite DB lives here)
+#
+#  Network: bridge mode with a fixed IP so you can bookmark it
+#  Default dashboard URL: http://192.168.0.200:5000
+#
+#  To change the plug IP or ping interval, edit the environment
+#  section under the poller service below.
+# ─────────────────────────────────────────────────────────────
+
+networks:
+  pyoutage-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16   # internal Docker subnet
+
+volumes:
+  pyoutage-data:
+
+services:
+
+  # ── Poller ──────────────────────────────────────────────────
+  poller:
+    build:
+      context: ./poller
+    container_name: pyoutage-poller
+    restart: unless-stopped
+    network_mode: host          # needs host network to reach LAN IP 192.168.0.111
+    environment:
+      PLUG_IP:       "192.168.0.111"   # ← your smart plug IP
+      PING_INTERVAL: "5"               # ← seconds between pings
+      DB_PATH:       "/data/pyoutage.db"
+    volumes:
+      - pyoutage-data:/data
+
+  # ── Web dashboard ────────────────────────────────────────────
+  web:
+    build:
+      context: ./web
+    container_name: pyoutage-web
+    restart: unless-stopped
+    networks:
+      pyoutage-net:
+        ipv4_address: 172.28.0.10   # internal; exposed via ports below
+    ports:
+      - "5000:5000"               # access at http://<your-computer-ip>:5000
+    environment:
+      PLUG_IP: "192.168.0.111"    # shown in the dashboard header
+      DB_PATH: "/data/pyoutage.db"
+    volumes:
+      - pyoutage-data:/data
+    depends_on:
+      - poller

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PyOutage — Power Monitor</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f18;
+      --surface:   #161925;
+      --surface2:  #1e2235;
+      --border:    #2a2f4a;
+      --border2:   #3b4270;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --yellow:    #f59e0b;
+      --blue:      #60a5fa;
+      --accent:    #3b5bdb;
+      --accent-h:  #4c6ef5;
+      --snake:     #4ade80;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .logo-text {
+      line-height: 1.1;
+    }
+
+    .logo-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+
+    .logo-text h1 span { color: var(--snake); }
+    .logo-text p { font-size: 0.7rem; color: var(--muted); }
+
+    /* ── Live badge ── */
+    #live-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 16px;
+      min-width: 180px;
+    }
+
+    #live-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+    #live-dot.on  { background: var(--green); box-shadow: 0 0 8px #22c55e99; }
+    #live-dot.off { background: var(--red);   box-shadow: 0 0 8px #ef444499; }
+
+    #live-state { font-size: 0.95rem; font-weight: 600; display: block; }
+    #live-since { font-size: 0.72rem; color: var(--muted); display: block; margin-top: 1px; }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex;
+      gap: 4px;
+      padding: 20px 28px 0;
+    }
+
+    .tab-btn {
+      padding: 8px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color 0.15s, background 0.15s;
+    }
+    .tab-btn:hover:not(.active) { color: var(--text); }
+    .tab-btn.active {
+      background: var(--surface2);
+      color: var(--blue);
+      border-color: var(--border2);
+    }
+
+    /* ── Panels ── */
+    main { padding: 0 28px 36px; }
+
+    .tab-panel {
+      display: none;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 0 12px 12px 12px;
+      padding: 24px;
+    }
+    .tab-panel.active { display: block; }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .controls label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .controls input,
+    .controls select {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 7px 11px;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .controls input:focus,
+    .controls select:focus { border-color: var(--accent-h); }
+
+    .btn {
+      padding: 7px 18px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: var(--accent-h); }
+
+    /* ── Stat cards ── */
+    .stat-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 22px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      flex: 1;
+      min-width: 130px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+    }
+    .stat-card .lbl  { font-size: 0.72rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .val  { font-size: 1.45rem; font-weight: 700; line-height: 1.1; }
+    .stat-card .sub  { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+    .val.green { color: var(--green); }
+    .val.red   { color: var(--red); }
+    .val.blue  { color: var(--blue); }
+    .val.yellow{ color: var(--yellow); }
+
+    /* ── Section titles ── */
+    .section-title {
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+    }
+
+    /* ── Timeline ── */
+    #timeline-wrap { overflow-x: auto; margin-bottom: 20px; }
+
+    #timeline-container {
+      min-width: 760px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px 10px;
+    }
+
+    #timeline-svg { width: 100%; height: 52px; display: block; }
+
+    .tl-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 5px;
+      min-width: 760px;
+    }
+
+    /* ── Chart wrappers ── */
+    .chart-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    /* ── States ── */
+    .loading, .no-data {
+      text-align: center;
+      padding: 52px 0;
+      font-size: 0.9rem;
+    }
+    .loading { color: var(--blue); }
+    .no-data  { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🐍</div>
+    <div class="logo-text">
+      <h1>Py<span>Outage</span></h1>
+      <p>Power Cut Tracker · {{ plug_ip }}</p>
+    </div>
+  </div>
+
+  <div id="live-badge">
+    <div id="live-dot"></div>
+    <div>
+      <strong id="live-state">Checking…</strong>
+      <span id="live-since"></span>
+    </div>
+  </div>
+</header>
+
+<!-- ── Tabs ── -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('day')">📅 Day</button>
+  <button class="tab-btn"        onclick="switchTab('month')">📆 Month</button>
+  <button class="tab-btn"        onclick="switchTab('year')">📊 Year</button>
+</div>
+
+<main>
+
+  <!-- ═══════════════════════════════════════════════════════ DAY ═══ -->
+  <div id="tab-day" class="tab-panel active">
+
+    <div class="controls">
+      <label>Date</label>
+      <input type="date" id="day-picker"/>
+      <button class="btn" onclick="loadDay()">Load</button>
+    </div>
+
+    <div id="day-loading" class="loading" style="display:none">Loading…</div>
+    <div id="day-nodata"  class="no-data"  style="display:none">No data recorded for this date.</div>
+
+    <div id="day-content" style="display:none">
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="lbl">Uptime</div>
+          <div class="val green" id="d-uptime-pct">—</div>
+          <div class="sub"      id="d-uptime-dur">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Downtime</div>
+          <div class="val red"  id="d-down-pct">—</div>
+          <div class="sub"      id="d-down-dur">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Outages</div>
+          <div class="val blue" id="d-outages">—</div>
+          <div class="sub">power cuts today</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Longest Cut</div>
+          <div class="val red"  id="d-longest">—</div>
+          <div class="sub">single outage</div>
+        </div>
+      </div>
+
+      <p class="section-title">24-Hour Power Timeline</p>
+      <div id="timeline-wrap">
+        <div id="timeline-container">
+          <svg id="timeline-svg"></svg>
+          <div class="tl-labels">
+            <span>12 AM</span><span>3 AM</span><span>6 AM</span>
+            <span>9 AM</span><span>12 PM</span><span>3 PM</span>
+            <span>6 PM</span><span>9 PM</span><span>12 AM</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="section-title" style="margin-top:18px">Hourly Uptime Breakdown</p>
+      <div class="chart-box">
+        <canvas id="day-hourly-chart" height="80"></canvas>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ MONTH ═══ -->
+  <div id="tab-month" class="tab-panel">
+
+    <div class="controls">
+      <label>Year</label>
+      <input type="number" id="m-year"  style="width:82px" min="2020" max="2100"/>
+      <label>Month</label>
+      <select id="m-month">
+        <option value="1">January</option>  <option value="2">February</option>
+        <option value="3">March</option>    <option value="4">April</option>
+        <option value="5">May</option>      <option value="6">June</option>
+        <option value="7">July</option>     <option value="8">August</option>
+        <option value="9">September</option><option value="10">October</option>
+        <option value="11">November</option><option value="12">December</option>
+      </select>
+      <button class="btn" onclick="loadMonth()">Load</button>
+    </div>
+
+    <div id="month-loading" class="loading" style="display:none">Loading…</div>
+    <div id="month-nodata"  class="no-data"  style="display:none">No data recorded for this month.</div>
+
+    <div id="month-content" style="display:none">
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="lbl">Avg Monthly Uptime</div>
+          <div class="val green" id="m-avg">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Best Day</div>
+          <div class="val green" id="m-best">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Worst Day</div>
+          <div class="val red"  id="m-worst">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Days with Outage</div>
+          <div class="val yellow" id="m-outage-days">—</div>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        <canvas id="month-chart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ YEAR ═══ -->
+  <div id="tab-year" class="tab-panel">
+
+    <div class="controls">
+      <label>Year</label>
+      <input type="number" id="y-year" style="width:82px" min="2020" max="2100"/>
+      <button class="btn" onclick="loadYear()">Load</button>
+    </div>
+
+    <div id="year-loading" class="loading" style="display:none">Loading…</div>
+    <div id="year-nodata"  class="no-data"  style="display:none">No data recorded for this year.</div>
+
+    <div id="year-content" style="display:none">
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="lbl">Avg Annual Uptime</div>
+          <div class="val green" id="y-avg">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Best Month</div>
+          <div class="val green" id="y-best">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Worst Month</div>
+          <div class="val red"  id="y-worst">—</div>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        <canvas id="year-chart" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Globals ───────────────────────────────────────────────────────────────────
+const charts = {};
+
+const CHART_DEFAULTS = {
+  plugins: { legend: { display: false } },
+  animation: { duration: 400 },
+  scales: {
+    y: {
+      min: 0, max: 100,
+      grid:  { color: '#1e2235' },
+      ticks: { color: '#64748b', callback: v => v + '%' }
+    },
+    x: {
+      grid:  { display: false },
+      ticks: { color: '#64748b', maxRotation: 0 }
+    }
+  }
+};
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtDur(secs) {
+  if (secs == null || secs < 0) return '—';
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = Math.floor(secs % 60);
+  if (h) return `${h}h ${m}m`;
+  if (m) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function fmtPct(v) { return v == null ? '—' : v.toFixed(1) + '%'; }
+
+function barColor(v) {
+  if (v == null) return '#2a2f4a';
+  if (v >= 90)  return '#22c55e';
+  if (v >= 50)  return '#f59e0b';
+  return '#ef4444';
+}
+
+function destroyChart(key) {
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+
+function show(id)  { document.getElementById(id).style.display = 'block'; }
+function hide(id)  { document.getElementById(id).style.display = 'none'; }
+function flex(id)  { document.getElementById(id).style.display = 'flex'; }
+function text(id, v) { document.getElementById(id).textContent = v; }
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+function switchTab(name) {
+  ['day','month','year'].forEach((t, i) => {
+    document.querySelectorAll('.tab-btn')[i].classList.toggle('active', t === name);
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+}
+
+// ── Live status ───────────────────────────────────────────────────────────────
+
+async function pollLive() {
+  try {
+    const d = await fetch('/api/status').then(r => r.json());
+    const dot = document.getElementById('live-dot');
+    const stateEl = document.getElementById('live-state');
+
+    if (d.status === 'ON') {
+      dot.className = 'on';
+      stateEl.textContent = 'Power ON';
+      stateEl.style.color = '#22c55e';
+    } else if (d.status === 'OFF') {
+      dot.className = 'off';
+      stateEl.textContent = 'Power OFF';
+      stateEl.style.color = '#ef4444';
+    } else {
+      dot.className = '';
+      stateEl.textContent = 'Unknown';
+      stateEl.style.color = '#64748b';
+    }
+
+    document.getElementById('live-since').textContent = d.since
+      ? 'since ' + new Date(d.since).toLocaleTimeString()
+      : '';
+  } catch (_) {}
+}
+
+setInterval(pollLive, 5000);
+pollLive();
+
+// ── DAY ───────────────────────────────────────────────────────────────────────
+
+async function loadDay() {
+  const date = document.getElementById('day-picker').value;
+  if (!date) return;
+
+  hide('day-content'); hide('day-nodata');
+  show('day-loading');
+
+  const d = await fetch(`/api/day?date=${date}`).then(r => r.json());
+  hide('day-loading');
+
+  if (!d.pings || d.pings.length === 0) { show('day-nodata'); return; }
+
+  // ── Derived stats ──
+  const INTERVAL = 5;
+  const totalSecs = d.pings.length * INTERVAL;
+  const onSecs    = d.pings.filter(p => p.status === 1).length * INTERVAL;
+  const offSecs   = totalSecs - onSecs;
+  const upPct     = d.uptime_pct;
+
+  let outages = 0, longestOff = 0, curOff = 0;
+  for (let i = 1; i < d.pings.length; i++) {
+    if (d.pings[i].status === 0 && d.pings[i-1].status === 1) outages++;
+    curOff = d.pings[i].status === 0 ? curOff + INTERVAL : 0;
+    longestOff = Math.max(longestOff, curOff);
+  }
+
+  text('d-uptime-pct', fmtPct(upPct));
+  text('d-uptime-dur', fmtDur(onSecs));
+  text('d-down-pct',   fmtPct(100 - upPct));
+  text('d-down-dur',   fmtDur(offSecs));
+  text('d-outages',    outages);
+  text('d-longest',    fmtDur(longestOff));
+
+  // ── Timeline SVG ──
+  drawTimeline(d.segments, d.day_start_ts, d.day_end_ts);
+
+  // ── Hourly bar ──
+  const hours = Array.from({length: 24}, () => ({on: 0, total: 0}));
+  d.pings.forEach(p => {
+    const h = new Date(p.ts * 1000).getHours();
+    hours[h].total++;
+    if (p.status === 1) hours[h].on++;
+  });
+
+  const hLabels = hours.map((_, i) => i === 0 ? '12a' : i < 12 ? `${i}a` : i === 12 ? '12p' : `${i-12}p`);
+  const hData   = hours.map(h => h.total ? +((h.on / h.total) * 100).toFixed(1) : null);
+
+  destroyChart('day-hourly');
+  charts['day-hourly'] = new Chart(
+    document.getElementById('day-hourly-chart'),
+    {
+      type: 'bar',
+      data: {
+        labels: hLabels,
+        datasets: [{
+          data: hData,
+          backgroundColor: hData.map(barColor),
+          borderRadius: 4,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        ...CHART_DEFAULTS,
+        plugins: {
+          ...CHART_DEFAULTS.plugins,
+          tooltip: { callbacks: { label: ctx => fmtPct(ctx.raw) } }
+        }
+      }
+    }
+  );
+
+  show('day-content');
+}
+
+function drawTimeline(segments, dayStart, dayEnd) {
+  const svg    = document.getElementById('timeline-svg');
+  const W      = svg.parentElement.clientWidth - 32 || 760;
+  const H      = 52;
+  const span   = dayEnd - dayStart;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.innerHTML = '';
+
+  // Background track
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  Object.assign(bg, {});
+  bg.setAttribute('x', 0);      bg.setAttribute('y', 8);
+  bg.setAttribute('width', W);  bg.setAttribute('height', 36);
+  bg.setAttribute('fill', '#1e2235'); bg.setAttribute('rx', 5);
+  svg.appendChild(bg);
+
+  // Segments
+  segments.forEach(seg => {
+    const x1 = ((seg.start - dayStart) / span) * W;
+    const x2 = ((seg.end   - dayStart) / span) * W;
+    const w  = Math.max(x2 - x1, 1);
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x', x1);    rect.setAttribute('y', 8);
+    rect.setAttribute('width', w); rect.setAttribute('height', 36);
+    rect.setAttribute('fill',    seg.status === 1 ? '#22c55e' : '#ef4444');
+    rect.setAttribute('opacity', seg.status === 1 ? '0.82'    : '0.72');
+
+    const t = document.createElementNS('http://www.w3.org/2000/svg','title');
+    const st = new Date(seg.start * 1000).toLocaleTimeString();
+    const en = new Date(seg.end   * 1000).toLocaleTimeString();
+    t.textContent = `${seg.status ? '✅ ON' : '❌ OFF'} · ${st} → ${en} (${fmtDur(seg.end - seg.start)})`;
+    rect.appendChild(t);
+    svg.appendChild(rect);
+  });
+
+  // Hour grid lines
+  for (let h = 0; h <= 24; h += 3) {
+    const x = (h / 24) * W;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1', x); line.setAttribute('y1', 6);
+    line.setAttribute('x2', x); line.setAttribute('y2', 46);
+    line.setAttribute('stroke', '#2a2f4a'); line.setAttribute('stroke-width', 1);
+    svg.appendChild(line);
+  }
+}
+
+// ── MONTH ─────────────────────────────────────────────────────────────────────
+
+async function loadMonth() {
+  const year  = document.getElementById('m-year').value;
+  const month = document.getElementById('m-month').value;
+
+  hide('month-content'); hide('month-nodata');
+  show('month-loading');
+
+  const d = await fetch(`/api/month?year=${year}&month=${month}`).then(r => r.json());
+  hide('month-loading');
+
+  const valid = d.days.filter(x => x.uptime_pct !== null);
+  if (!valid.length) { show('month-nodata'); return; }
+
+  const best  = valid.reduce((a,b) => a.uptime_pct > b.uptime_pct ? a : b);
+  const worst = valid.reduce((a,b) => a.uptime_pct < b.uptime_pct ? a : b);
+
+  text('m-avg',         fmtPct(d.avg_uptime_pct));
+  text('m-best',        `Day ${best.date.slice(8)}  —  ${fmtPct(best.uptime_pct)}`);
+  text('m-worst',       `Day ${worst.date.slice(8)}  —  ${fmtPct(worst.uptime_pct)}`);
+  text('m-outage-days', valid.filter(x => x.uptime_pct < 100).length + ' days');
+
+  const labels = d.days.map(x => +x.date.slice(8));
+  const vals   = d.days.map(x => x.uptime_pct);
+
+  destroyChart('month');
+  charts['month'] = new Chart(document.getElementById('month-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Uptime %',
+        data: vals,
+        backgroundColor: vals.map(barColor),
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: {
+        ...CHART_DEFAULTS.plugins,
+        tooltip: { callbacks: { label: ctx => fmtPct(ctx.raw) } }
+      }
+    }
+  });
+
+  show('month-content');
+}
+
+// ── YEAR ──────────────────────────────────────────────────────────────────────
+
+async function loadYear() {
+  const year = document.getElementById('y-year').value;
+
+  hide('year-content'); hide('year-nodata');
+  show('year-loading');
+
+  const d = await fetch(`/api/year?year=${year}`).then(r => r.json());
+  hide('year-loading');
+
+  const valid = d.months.filter(x => x.uptime_pct !== null);
+  if (!valid.length) { show('year-nodata'); return; }
+
+  const best  = valid.reduce((a,b) => a.uptime_pct > b.uptime_pct ? a : b);
+  const worst = valid.reduce((a,b) => a.uptime_pct < b.uptime_pct ? a : b);
+
+  text('y-avg',   fmtPct(d.avg_uptime_pct));
+  text('y-best',  `${best.month_name}  —  ${fmtPct(best.uptime_pct)}`);
+  text('y-worst', `${worst.month_name}  —  ${fmtPct(worst.uptime_pct)}`);
+
+  const labels = d.months.map(x => x.month_name);
+  const vals   = d.months.map(x => x.uptime_pct);
+
+  destroyChart('year');
+  charts['year'] = new Chart(document.getElementById('year-chart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Uptime %',
+        data: vals,
+        backgroundColor: vals.map(barColor),
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: {
+        ...CHART_DEFAULTS.plugins,
+        tooltip: { callbacks: { label: ctx => fmtPct(ctx.raw) } }
+      }
+    }
+  });
+
+  show('year-content');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+(function init() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+
+  document.getElementById('day-picker').value = todayStr;
+  document.getElementById('m-year').value     = now.getFullYear();
+  document.getElementById('m-month').value    = now.getMonth() + 1;
+  document.getElementById('y-year').value     = now.getFullYear();
+
+  loadDay();
+})();
+</script>
+</body>
+</html>
