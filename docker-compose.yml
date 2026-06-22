@@ -39,6 +39,7 @@ services:
       PLUG_IP:       "192.168.0.111"   # ← your smart plug IP
       PING_INTERVAL: "5"               # ← seconds between pings
       DB_PATH:       "/data/pyoutage.db"
+      TZ:            "Asia/Kolkata"
     volumes:
       - pyoutage-data:/data
 
@@ -56,6 +57,7 @@ services:
     environment:
       PLUG_IP: "192.168.0.111"    # shown in the dashboard header
       DB_PATH: "/data/pyoutage.db"
+      TZ:      "Asia/Kolkata"
     volumes:
       - pyoutage-data:/data
     depends_on:
