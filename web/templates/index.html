@@ -72,27 +72,47 @@
     #live-badge {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 14px;
       background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 9px 16px;
-      min-width: 180px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 22px;
+      min-width: 220px;
+      transition: border-color 0.4s;
     }
+    #live-badge.on  { border-color: #22c55e55; }
+    #live-badge.off { border-color: #ef444455; }
 
     #live-dot {
-      width: 11px;
-      height: 11px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       background: var(--muted);
       flex-shrink: 0;
       transition: background 0.4s, box-shadow 0.4s;
     }
-    #live-dot.on  { background: var(--green); box-shadow: 0 0 8px #22c55e99; }
-    #live-dot.off { background: var(--red);   box-shadow: 0 0 8px #ef444499; }
+    #live-dot.on  {
+      background: var(--green);
+      box-shadow: 0 0 0 4px #22c55e22, 0 0 16px #22c55e88;
+      animation: pulse-green 2s infinite;
+    }
+    #live-dot.off {
+      background: var(--red);
+      box-shadow: 0 0 0 4px #ef444422, 0 0 16px #ef444488;
+      animation: pulse-red 1s infinite;
+    }
 
-    #live-state { font-size: 0.95rem; font-weight: 600; display: block; }
-    #live-since { font-size: 0.72rem; color: var(--muted); display: block; margin-top: 1px; }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 4px #22c55e22, 0 0 16px #22c55e88; }
+      50%       { box-shadow: 0 0 0 8px #22c55e11, 0 0 24px #22c55eaa; }
+    }
+    @keyframes pulse-red {
+      0%, 100% { box-shadow: 0 0 0 4px #ef444422, 0 0 16px #ef444488; }
+      50%       { box-shadow: 0 0 0 8px #ef444411, 0 0 24px #ef4444aa; }
+    }
+
+    #live-state { font-size: 1.15rem; font-weight: 700; display: block; letter-spacing: 0.3px; }
+    #live-since { font-size: 0.75rem; color: var(--muted); display: block; margin-top: 2px; }
 
     /* ── Tabs ── */
     .tab-bar {
@@ -237,6 +257,38 @@
       padding: 18px;
     }
 
+    /* ── Outage log table ── */
+    .outage-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    .outage-table th {
+      text-align: left;
+      padding: 8px 14px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .outage-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .outage-table tr:last-child td { border-bottom: none; }
+    .outage-table tr:hover td { background: var(--surface2); }
+    .outage-table .num  { color: var(--muted); font-weight: 600; }
+    .outage-table .dur  { color: var(--red);   font-weight: 600; }
+    .outage-table .time { color: var(--blue); }
+    .no-outages {
+      text-align: center;
+      padding: 24px;
+      color: var(--green);
+      font-size: 0.88rem;
+    }
+
     /* ── States ── */
     .loading, .no-data {
       text-align: center;
@@ -329,6 +381,11 @@
       <p class="section-title" style="margin-top:18px">Hourly Uptime Breakdown</p>
       <div class="chart-box">
         <canvas id="day-hourly-chart" height="80"></canvas>
+      </div>
+
+      <p class="section-title" style="margin-top:22px">Outage Log</p>
+      <div class="chart-box" style="padding:0; overflow:hidden;">
+        <div id="outage-log-body"></div>
       </div>
 
     </div>
@@ -484,16 +541,20 @@ async function pollLive() {
     const dot = document.getElementById('live-dot');
     const stateEl = document.getElementById('live-state');
 
+    const badge = document.getElementById('live-badge');
     if (d.status === 'ON') {
       dot.className = 'on';
+      badge.className = 'on';
       stateEl.textContent = 'Power ON';
       stateEl.style.color = '#22c55e';
     } else if (d.status === 'OFF') {
       dot.className = 'off';
+      badge.className = 'off';
       stateEl.textContent = 'Power OFF';
       stateEl.style.color = '#ef4444';
     } else {
       dot.className = '';
+      badge.className = '';
       stateEl.textContent = 'Unknown';
       stateEl.style.color = '#64748b';
     }
