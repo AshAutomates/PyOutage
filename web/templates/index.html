@@ -641,14 +641,60 @@ async function loadDay() {
     }
   );
 
+  // ── Outage log table ──
+  renderOutageLog(d.segments);
+
   show('day-content');
 }
 
+function renderOutageLog(segments) {
+  const container = document.getElementById('outage-log-body');
+
+  // Filter only OFF segments
+  const outages = segments.filter(s => s.status === 0);
+
+  if (outages.length === 0) {
+    container.innerHTML = '<div class="no-outages">✅ No outages recorded for this day!</div>';
+    return;
+  }
+
+  let html = `
+    <table class="outage-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Started</th>
+          <th>Restored</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  outages.forEach((seg, i) => {
+    const start = new Date(seg.start * 1000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    const end   = new Date(seg.end   * 1000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+    const dur   = fmtDur(seg.end - seg.start);
+    html += `
+      <tr>
+        <td class="num">${i + 1}</td>
+        <td class="time">❌ ${start}</td>
+        <td class="time">✅ ${end}</td>
+        <td class="dur">${dur}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
 function drawTimeline(segments, dayStart, dayEnd) {
-  const svg    = document.getElementById('timeline-svg');
-  const W      = svg.parentElement.clientWidth - 32 || 760;
-  const H      = 52;
-  const span   = dayEnd - dayStart;
+  const svg      = document.getElementById('timeline-svg');
+  const container = document.getElementById('timeline-container');
+  const W        = container.clientWidth - 32 || 760;
+  const H        = 52;
+  const span     = dayEnd - dayStart;
 
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.setAttribute('preserveAspectRatio', 'none');
