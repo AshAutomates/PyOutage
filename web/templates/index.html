@@ -181,6 +181,25 @@
     .controls input:focus,
     .controls select:focus { border-color: var(--accent-h); }
 
+    .date-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .date-wrap input[type="date"] {
+      padding-right: 32px;
+    }
+    .cal-icon {
+      position: absolute;
+      right: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      user-select: none;
+    }
+    /* hide the default browser calendar icon */
+    input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; right: 0; width: 30px; cursor: pointer; }
+
     .btn {
       padding: 7px 18px;
       background: var(--accent);
@@ -334,7 +353,10 @@
 
     <div class="controls">
       <label>Date</label>
-      <input type="date" id="day-picker"/>
+      <div class="date-wrap">
+        <input type="date" id="day-picker"/>
+        <span class="cal-icon" onclick="document.getElementById('day-picker').showPicker()">📅</span>
+      </div>
       <button class="btn" onclick="loadDay()">Load</button>
     </div>
 
@@ -603,8 +625,14 @@ async function loadDay() {
   text('d-outages',    outages);
   text('d-longest',    fmtDur(longestOff));
 
-  // ── Timeline SVG ──
-  drawTimeline(d.segments, d.day_start_ts, d.day_end_ts);
+  // ── Outage log table ──
+  renderOutageLog(d.segments);
+
+  // show content first so SVG container has real width
+  show('day-content');
+
+  // ── Timeline SVG — rendered after show so clientWidth is available ──
+  setTimeout(() => drawTimeline(d.segments, d.day_start_ts, d.day_end_ts), 50);
 
   // ── Hourly bar ──
   const hours = Array.from({length: 24}, () => ({on: 0, total: 0}));
@@ -640,11 +668,6 @@ async function loadDay() {
       }
     }
   );
-
-  // ── Outage log table ──
-  renderOutageLog(d.segments);
-
-  show('day-content');
 }
 
 function renderOutageLog(segments) {
