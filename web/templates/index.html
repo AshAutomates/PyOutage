@@ -9,28 +9,23 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0d0f18;
-      --surface:   #161925;
-      --surface2:  #1e2235;
-      --border:    #2a2f4a;
-      --border2:   #3b4270;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --green:     #22c55e;
-      --red:       #ef4444;
-      --yellow:    #f59e0b;
-      --blue:      #60a5fa;
-      --accent:    #3b5bdb;
-      --accent-h:  #4c6ef5;
-      --snake:     #4ade80;
+      --bg:       #0d0f18;
+      --surface:  #161925;
+      --surface2: #1e2235;
+      --border:   #2a2f4a;
+      --border2:  #3b4270;
+      --text:     #e2e8f0;
+      --muted:    #64748b;
+      --green:    #22c55e;
+      --red:      #ef4444;
+      --yellow:   #f59e0b;
+      --blue:     #60a5fa;
+      --accent:   #3b5bdb;
+      --accenth:  #4c6ef5;
+      --snake:    #4ade80;
     }
 
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
     /* ── Header ── */
     header {
@@ -40,31 +35,10 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
     }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-icon {
-      font-size: 1.6rem;
-      line-height: 1;
-    }
-
-    .logo-text {
-      line-height: 1.1;
-    }
-
-    .logo-text h1 {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 0.3px;
-    }
-
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { font-size: 1.6rem; }
+    .logo-text h1 { font-size: 1.15rem; font-weight: 700; color: #fff; }
     .logo-text h1 span { color: var(--snake); }
     .logo-text p { font-size: 0.7rem; color: var(--muted); }
 
@@ -84,243 +58,97 @@
     #live-badge.off { border-color: #ef444455; }
 
     #live-dot {
-      width: 22px;
-      height: 22px;
+      width: 22px; height: 22px;
       border-radius: 50%;
       background: var(--muted);
       flex-shrink: 0;
       transition: background 0.4s, box-shadow 0.4s;
     }
-    #live-dot.on  {
-      background: var(--green);
-      box-shadow: 0 0 0 4px #22c55e22, 0 0 16px #22c55e88;
-      animation: pulse-green 2s infinite;
-    }
-    #live-dot.off {
-      background: var(--red);
-      box-shadow: 0 0 0 4px #ef444422, 0 0 16px #ef444488;
-      animation: pulse-red 1s infinite;
-    }
+    #live-dot.on  { background: var(--green); box-shadow: 0 0 0 4px #22c55e22, 0 0 16px #22c55e88; animation: pg 2s infinite; }
+    #live-dot.off { background: var(--red);   box-shadow: 0 0 0 4px #ef444422, 0 0 16px #ef444488; animation: pr 1s infinite; }
+    @keyframes pg { 0%,100%{box-shadow:0 0 0 4px #22c55e22,0 0 16px #22c55e88}50%{box-shadow:0 0 0 8px #22c55e11,0 0 24px #22c55eaa} }
+    @keyframes pr { 0%,100%{box-shadow:0 0 0 4px #ef444422,0 0 16px #ef444488}50%{box-shadow:0 0 0 8px #ef444411,0 0 24px #ef4444aa} }
 
-    @keyframes pulse-green {
-      0%, 100% { box-shadow: 0 0 0 4px #22c55e22, 0 0 16px #22c55e88; }
-      50%       { box-shadow: 0 0 0 8px #22c55e11, 0 0 24px #22c55eaa; }
-    }
-    @keyframes pulse-red {
-      0%, 100% { box-shadow: 0 0 0 4px #ef444422, 0 0 16px #ef444488; }
-      50%       { box-shadow: 0 0 0 8px #ef444411, 0 0 24px #ef4444aa; }
-    }
-
-    #live-state { font-size: 1.15rem; font-weight: 700; display: block; letter-spacing: 0.3px; }
+    #live-state { font-size: 1.15rem; font-weight: 700; display: block; }
     #live-since { font-size: 0.75rem; color: var(--muted); display: block; margin-top: 2px; }
 
     /* ── Tabs ── */
-    .tab-bar {
-      display: flex;
-      gap: 4px;
-      padding: 20px 28px 0;
-    }
-
+    .tab-bar { display: flex; gap: 4px; padding: 20px 28px 0; }
     .tab-btn {
       padding: 8px 20px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 0.88rem;
-      font-weight: 500;
-      transition: color 0.15s, background 0.15s;
+      background: var(--surface); border: 1px solid var(--border); border-bottom: none;
+      border-radius: 8px 8px 0 0; color: var(--muted); cursor: pointer;
+      font-size: 0.88rem; font-weight: 500; transition: color 0.15s;
     }
     .tab-btn:hover:not(.active) { color: var(--text); }
-    .tab-btn.active {
-      background: var(--surface2);
-      color: var(--blue);
-      border-color: var(--border2);
-    }
+    .tab-btn.active { background: var(--surface2); color: var(--blue); border-color: var(--border2); }
 
     /* ── Panels ── */
     main { padding: 0 28px 36px; }
-
-    .tab-panel {
-      display: none;
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      border-radius: 0 12px 12px 12px;
-      padding: 24px;
-    }
+    .tab-panel { display: none; background: var(--surface2); border: 1px solid var(--border2); border-radius: 0 12px 12px 12px; padding: 24px; }
     .tab-panel.active { display: block; }
 
     /* ── Controls ── */
-    .controls {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 22px;
+    .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+    .controls label { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+    .controls input, .controls select {
+      background: var(--bg); border: 1px solid var(--border2); color: var(--text);
+      border-radius: 7px; padding: 7px 11px; font-size: 0.88rem; outline: none;
     }
+    .controls input:focus, .controls select:focus { border-color: var(--accenth); }
 
-    .controls label {
-      font-size: 0.8rem;
-      color: var(--muted);
-      font-weight: 500;
-    }
+    /* ── Date picker with icon ── */
+    .date-wrap { position: relative; display: inline-flex; align-items: center; }
+    .date-wrap input[type="date"] { padding-right: 34px; }
+    .cal-icon { position: absolute; right: 8px; font-size: 1rem; cursor: pointer; user-select: none; }
+    input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; right: 0; width: 34px; cursor: pointer; }
 
-    .controls input,
-    .controls select {
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      border-radius: 7px;
-      padding: 7px 11px;
-      font-size: 0.88rem;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    .controls input:focus,
-    .controls select:focus { border-color: var(--accent-h); }
-
-    .date-wrap {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-    }
-    .date-wrap input[type="date"] {
-      padding-right: 32px;
-    }
-    .cal-icon {
-      position: absolute;
-      right: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      line-height: 1;
-      user-select: none;
-    }
-    /* hide the default browser calendar icon */
-    input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; right: 0; width: 30px; cursor: pointer; }
-
-    .btn {
-      padding: 7px 18px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 7px;
-      cursor: pointer;
-      font-size: 0.88rem;
-      font-weight: 600;
-      transition: background 0.15s;
-    }
-    .btn:hover { background: var(--accent-h); }
+    /* ── Button ── */
+    .btn { padding: 7px 18px; background: var(--accent); color: #fff; border: none; border-radius: 7px; cursor: pointer; font-size: 0.88rem; font-weight: 600; }
+    .btn:hover { background: var(--accenth); }
 
     /* ── Stat cards ── */
-    .stat-row {
-      display: flex;
-      gap: 14px;
-      margin-bottom: 22px;
-      flex-wrap: wrap;
-    }
+    .stat-row { display: flex; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
+    .stat-card { flex: 1; min-width: 130px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; }
+    .stat-card .lbl { font-size: 0.72rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .val { font-size: 1.45rem; font-weight: 700; line-height: 1.1; }
+    .stat-card .sub { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+    .val.green  { color: var(--green); }
+    .val.red    { color: var(--red); }
+    .val.blue   { color: var(--blue); }
+    .val.yellow { color: var(--yellow); }
 
-    .stat-card {
-      flex: 1;
-      min-width: 130px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 18px;
-    }
-    .stat-card .lbl  { font-size: 0.72rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-card .val  { font-size: 1.45rem; font-weight: 700; line-height: 1.1; }
-    .stat-card .sub  { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
-    .val.green { color: var(--green); }
-    .val.red   { color: var(--red); }
-    .val.blue  { color: var(--blue); }
-    .val.yellow{ color: var(--yellow); }
-
-    /* ── Section titles ── */
-    .section-title {
-      font-size: 0.72rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 10px;
-    }
+    /* ── Section title ── */
+    .sec { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
 
     /* ── Timeline ── */
     #timeline-wrap { overflow-x: auto; margin-bottom: 20px; }
-
-    #timeline-container {
-      min-width: 760px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px 10px;
-    }
-
+    #timeline-container { min-width: 760px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px 10px; }
     #timeline-svg { width: 100%; height: 52px; display: block; }
+    .tl-labels { display: flex; justify-content: space-between; font-size: 0.68rem; color: var(--muted); margin-top: 5px; }
 
-    .tl-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.68rem;
-      color: var(--muted);
-      margin-top: 5px;
-      min-width: 760px;
-    }
+    /* ── Chart box ── */
+    .chart-box { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
 
-    /* ── Chart wrappers ── */
-    .chart-box {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 18px;
-    }
-
-    /* ── Outage log table ── */
-    .outage-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.88rem;
-    }
-    .outage-table th {
-      text-align: left;
-      padding: 8px 14px;
-      font-size: 0.72rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      border-bottom: 1px solid var(--border);
-    }
-    .outage-table td {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-    }
+    /* ── Outage table ── */
+    .outage-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .outage-table th { text-align: left; padding: 10px 16px; font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--border); }
+    .outage-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); }
     .outage-table tr:last-child td { border-bottom: none; }
-    .outage-table tr:hover td { background: var(--surface2); }
-    .outage-table .num  { color: var(--muted); font-weight: 600; }
-    .outage-table .dur  { color: var(--red);   font-weight: 600; }
-    .outage-table .time { color: var(--blue); }
-    .no-outages {
-      text-align: center;
-      padding: 24px;
-      color: var(--green);
-      font-size: 0.88rem;
-    }
+    .outage-table tr:hover td { background: #ffffff08; }
+    .outage-table .num { color: var(--muted); font-weight: 600; width: 40px; }
+    .outage-table .dur { color: var(--red); font-weight: 700; }
+    .outage-table .ton { color: var(--red); }
+    .outage-table .toff { color: var(--green); }
+    .no-outages { text-align: center; padding: 28px; color: var(--green); font-size: 0.9rem; }
 
     /* ── States ── */
-    .loading, .no-data {
-      text-align: center;
-      padding: 52px 0;
-      font-size: 0.9rem;
-    }
-    .loading { color: var(--blue); }
-    .no-data  { color: var(--muted); }
+    .loading { text-align: center; padding: 52px 0; font-size: 0.9rem; color: var(--blue); }
+    .no-data  { text-align: center; padding: 52px 0; font-size: 0.9rem; color: var(--muted); }
   </style>
 </head>
 <body>
 
-<!-- ── Header ── -->
 <header>
   <div class="logo">
     <div class="logo-icon">🐍</div>
@@ -329,7 +157,6 @@
       <p>Power Cut Tracker · {{ plug_ip }}</p>
     </div>
   </div>
-
   <div id="live-badge">
     <div id="live-dot"></div>
     <div>
@@ -339,7 +166,6 @@
   </div>
 </header>
 
-<!-- ── Tabs ── -->
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('day')">📅 Day</button>
   <button class="tab-btn"        onclick="switchTab('month')">📆 Month</button>
@@ -348,9 +174,8 @@
 
 <main>
 
-  <!-- ═══════════════════════════════════════════════════════ DAY ═══ -->
+  <!-- DAY -->
   <div id="tab-day" class="tab-panel active">
-
     <div class="controls">
       <label>Date</label>
       <div class="date-wrap">
@@ -364,31 +189,14 @@
     <div id="day-nodata"  class="no-data"  style="display:none">No data recorded for this date.</div>
 
     <div id="day-content" style="display:none">
-
       <div class="stat-row">
-        <div class="stat-card">
-          <div class="lbl">Uptime</div>
-          <div class="val green" id="d-uptime-pct">—</div>
-          <div class="sub"      id="d-uptime-dur">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="lbl">Downtime</div>
-          <div class="val red"  id="d-down-pct">—</div>
-          <div class="sub"      id="d-down-dur">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="lbl">Outages</div>
-          <div class="val blue" id="d-outages">—</div>
-          <div class="sub">power cuts today</div>
-        </div>
-        <div class="stat-card">
-          <div class="lbl">Longest Cut</div>
-          <div class="val red"  id="d-longest">—</div>
-          <div class="sub">single outage</div>
-        </div>
+        <div class="stat-card"><div class="lbl">Uptime</div><div class="val green" id="d-uptime-pct">—</div><div class="sub" id="d-uptime-dur">—</div></div>
+        <div class="stat-card"><div class="lbl">Downtime</div><div class="val red" id="d-down-pct">—</div><div class="sub" id="d-down-dur">—</div></div>
+        <div class="stat-card"><div class="lbl">Outages</div><div class="val blue" id="d-outages">—</div><div class="sub">power cuts</div></div>
+        <div class="stat-card"><div class="lbl">Longest Cut</div><div class="val red" id="d-longest">—</div><div class="sub">single outage</div></div>
       </div>
 
-      <p class="section-title">24-Hour Power Timeline</p>
+      <p class="sec">24-Hour Power Timeline</p>
       <div id="timeline-wrap">
         <div id="timeline-container">
           <svg id="timeline-svg"></svg>
@@ -400,25 +208,23 @@
         </div>
       </div>
 
-      <p class="section-title" style="margin-top:18px">Hourly Uptime Breakdown</p>
-      <div class="chart-box">
+      <p class="sec" style="margin-top:20px">Hourly Uptime Breakdown</p>
+      <div class="chart-box" style="margin-bottom:20px">
         <canvas id="day-hourly-chart" height="80"></canvas>
       </div>
 
-      <p class="section-title" style="margin-top:22px">Outage Log</p>
-      <div class="chart-box" style="padding:0; overflow:hidden;">
+      <p class="sec">Outage Log</p>
+      <div class="chart-box" style="padding:0; overflow:hidden">
         <div id="outage-log-body"></div>
       </div>
-
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════ MONTH ═══ -->
+  <!-- MONTH -->
   <div id="tab-month" class="tab-panel">
-
     <div class="controls">
       <label>Year</label>
-      <input type="number" id="m-year"  style="width:82px" min="2020" max="2100"/>
+      <input type="number" id="m-year" style="width:82px" min="2020" max="2100"/>
       <label>Month</label>
       <select id="m-month">
         <option value="1">January</option>  <option value="2">February</option>
@@ -430,450 +236,272 @@
       </select>
       <button class="btn" onclick="loadMonth()">Load</button>
     </div>
-
     <div id="month-loading" class="loading" style="display:none">Loading…</div>
-    <div id="month-nodata"  class="no-data"  style="display:none">No data recorded for this month.</div>
-
+    <div id="month-nodata"  class="no-data"  style="display:none">No data for this month.</div>
     <div id="month-content" style="display:none">
       <div class="stat-row">
-        <div class="stat-card">
-          <div class="lbl">Avg Monthly Uptime</div>
-          <div class="val green" id="m-avg">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="lbl">Best Day</div>
-          <div class="val green" id="m-best">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="lbl">Worst Day</div>
-          <div class="val red"  id="m-worst">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="lbl">Days with Outage</div>
-          <div class="val yellow" id="m-outage-days">—</div>
-        </div>
+        <div class="stat-card"><div class="lbl">Avg Monthly Uptime</div><div class="val green" id="m-avg">—</div></div>
+        <div class="stat-card"><div class="lbl">Best Day</div><div class="val green" id="m-best">—</div></div>
+        <div class="stat-card"><div class="lbl">Worst Day</div><div class="val red" id="m-worst">—</div></div>
+        <div class="stat-card"><div class="lbl">Days with Outage</div><div class="val yellow" id="m-outage-days">—</div></div>
       </div>
-
-      <div class="chart-box">
-        <canvas id="month-chart" height="100"></canvas>
-      </div>
+      <div class="chart-box"><canvas id="month-chart" height="100"></canvas></div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════ YEAR ═══ -->
+  <!-- YEAR -->
   <div id="tab-year" class="tab-panel">
-
     <div class="controls">
       <label>Year</label>
       <input type="number" id="y-year" style="width:82px" min="2020" max="2100"/>
       <button class="btn" onclick="loadYear()">Load</button>
     </div>
-
     <div id="year-loading" class="loading" style="display:none">Loading…</div>
-    <div id="year-nodata"  class="no-data"  style="display:none">No data recorded for this year.</div>
-
+    <div id="year-nodata"  class="no-data"  style="display:none">No data for this year.</div>
     <div id="year-content" style="display:none">
       <div class="stat-row">
-        <div class="stat-card">
-          <div class="lbl">Avg Annual Uptime</div>
-          <div class="val green" id="y-avg">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="lbl">Best Month</div>
-          <div class="val green" id="y-best">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="lbl">Worst Month</div>
-          <div class="val red"  id="y-worst">—</div>
-        </div>
+        <div class="stat-card"><div class="lbl">Avg Annual Uptime</div><div class="val green" id="y-avg">—</div></div>
+        <div class="stat-card"><div class="lbl">Best Month</div><div class="val green" id="y-best">—</div></div>
+        <div class="stat-card"><div class="lbl">Worst Month</div><div class="val red" id="y-worst">—</div></div>
       </div>
-
-      <div class="chart-box">
-        <canvas id="year-chart" height="100"></canvas>
-      </div>
+      <div class="chart-box"><canvas id="year-chart" height="100"></canvas></div>
     </div>
   </div>
 
 </main>
 
 <script>
-// ── Globals ───────────────────────────────────────────────────────────────────
 const charts = {};
 
-const CHART_DEFAULTS = {
+const CHART_OPT = {
   plugins: { legend: { display: false } },
   animation: { duration: 400 },
   scales: {
-    y: {
-      min: 0, max: 100,
-      grid:  { color: '#1e2235' },
-      ticks: { color: '#64748b', callback: v => v + '%' }
-    },
-    x: {
-      grid:  { display: false },
-      ticks: { color: '#64748b', maxRotation: 0 }
-    }
+    y: { min:0, max:100, grid:{color:'#1e2235'}, ticks:{color:'#64748b', callback: v => v+'%'} },
+    x: { grid:{display:false}, ticks:{color:'#64748b', maxRotation:0} }
   }
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtDur(secs) {
-  if (secs == null || secs < 0) return '—';
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = Math.floor(secs % 60);
+function fmtDur(s) {
+  if (s == null || s < 0) return '—';
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
   if (h) return `${h}h ${m}m`;
-  if (m) return `${m}m ${s}s`;
-  return `${s}s`;
+  if (m) return `${m}m ${sec}s`;
+  return `${sec}s`;
 }
-
-function fmtPct(v) { return v == null ? '—' : v.toFixed(1) + '%'; }
-
-function barColor(v) {
-  if (v == null) return '#2a2f4a';
-  if (v >= 90)  return '#22c55e';
-  if (v >= 50)  return '#f59e0b';
-  return '#ef4444';
-}
-
-function destroyChart(key) {
-  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
-}
-
-function show(id)  { document.getElementById(id).style.display = 'block'; }
-function hide(id)  { document.getElementById(id).style.display = 'none'; }
-function flex(id)  { document.getElementById(id).style.display = 'flex'; }
-function text(id, v) { document.getElementById(id).textContent = v; }
-
-// ── Tabs ──────────────────────────────────────────────────────────────────────
+function fmtPct(v)    { return v == null ? '—' : v.toFixed(1)+'%'; }
+function barColor(v)  { return v==null?'#2a2f4a':v>=90?'#22c55e':v>=50?'#f59e0b':'#ef4444'; }
+function killChart(k) { if(charts[k]){charts[k].destroy();delete charts[k];} }
+function show(id)     { document.getElementById(id).style.display='block'; }
+function hide(id)     { document.getElementById(id).style.display='none'; }
+function txt(id,v)    { document.getElementById(id).textContent=v; }
 
 function switchTab(name) {
-  ['day','month','year'].forEach((t, i) => {
-    document.querySelectorAll('.tab-btn')[i].classList.toggle('active', t === name);
-    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  ['day','month','year'].forEach((t,i) => {
+    document.querySelectorAll('.tab-btn')[i].classList.toggle('active', t===name);
+    document.getElementById('tab-'+t).classList.toggle('active', t===name);
   });
 }
 
-// ── Live status ───────────────────────────────────────────────────────────────
-
+// ── Live status ──────────────────────────────────────────────
 async function pollLive() {
   try {
-    const d = await fetch('/api/status').then(r => r.json());
-    const dot = document.getElementById('live-dot');
-    const stateEl = document.getElementById('live-state');
-
+    const d = await fetch('/api/status').then(r=>r.json());
+    const dot   = document.getElementById('live-dot');
     const badge = document.getElementById('live-badge');
-    if (d.status === 'ON') {
-      dot.className = 'on';
-      badge.className = 'on';
-      stateEl.textContent = 'Power ON';
-      stateEl.style.color = '#22c55e';
-    } else if (d.status === 'OFF') {
-      dot.className = 'off';
-      badge.className = 'off';
-      stateEl.textContent = 'Power OFF';
-      stateEl.style.color = '#ef4444';
+    const state = document.getElementById('live-state');
+    if (d.status==='ON') {
+      dot.className='on'; badge.className='on';
+      state.textContent='Power ON'; state.style.color='#22c55e';
+    } else if (d.status==='OFF') {
+      dot.className='off'; badge.className='off';
+      state.textContent='Power OFF'; state.style.color='#ef4444';
     } else {
-      dot.className = '';
-      badge.className = '';
-      stateEl.textContent = 'Unknown';
-      stateEl.style.color = '#64748b';
+      dot.className=''; badge.className='';
+      state.textContent='Unknown'; state.style.color='#64748b';
     }
-
     document.getElementById('live-since').textContent = d.since
-      ? 'since ' + new Date(d.since).toLocaleTimeString()
-      : '';
-  } catch (_) {}
+      ? 'since '+new Date(d.since).toLocaleTimeString() : '';
+  } catch(_) {}
 }
-
 setInterval(pollLive, 5000);
 pollLive();
 
-// ── DAY ───────────────────────────────────────────────────────────────────────
-
+// ── DAY ──────────────────────────────────────────────────────
 async function loadDay() {
   const date = document.getElementById('day-picker').value;
   if (!date) return;
+  hide('day-content'); hide('day-nodata'); show('day-loading');
 
-  hide('day-content'); hide('day-nodata');
-  show('day-loading');
-
-  const d = await fetch(`/api/day?date=${date}`).then(r => r.json());
+  const d = await fetch('/api/day?date='+date).then(r=>r.json());
   hide('day-loading');
 
-  if (!d.pings || d.pings.length === 0) { show('day-nodata'); return; }
+  if (!d.pings || d.pings.length===0) { show('day-nodata'); return; }
 
-  // ── Derived stats ──
-  const INTERVAL = 5;
-  const totalSecs = d.pings.length * INTERVAL;
-  const onSecs    = d.pings.filter(p => p.status === 1).length * INTERVAL;
-  const offSecs   = totalSecs - onSecs;
-  const upPct     = d.uptime_pct;
+  const IV = 5;
+  const total  = d.pings.length * IV;
+  const onSecs = d.pings.filter(p=>p.status===1).length * IV;
+  const offSecs= total - onSecs;
 
-  let outages = 0, longestOff = 0, curOff = 0;
-  for (let i = 1; i < d.pings.length; i++) {
-    if (d.pings[i].status === 0 && d.pings[i-1].status === 1) outages++;
-    curOff = d.pings[i].status === 0 ? curOff + INTERVAL : 0;
-    longestOff = Math.max(longestOff, curOff);
+  let outages=0, longest=0, cur=0;
+  for (let i=1; i<d.pings.length; i++) {
+    if (d.pings[i].status===0 && d.pings[i-1].status===1) outages++;
+    cur = d.pings[i].status===0 ? cur+IV : 0;
+    longest = Math.max(longest, cur);
   }
 
-  text('d-uptime-pct', fmtPct(upPct));
-  text('d-uptime-dur', fmtDur(onSecs));
-  text('d-down-pct',   fmtPct(100 - upPct));
-  text('d-down-dur',   fmtDur(offSecs));
-  text('d-outages',    outages);
-  text('d-longest',    fmtDur(longestOff));
+  txt('d-uptime-pct', fmtPct(d.uptime_pct));
+  txt('d-uptime-dur', fmtDur(onSecs));
+  txt('d-down-pct',   fmtPct(100-d.uptime_pct));
+  txt('d-down-dur',   fmtDur(offSecs));
+  txt('d-outages',    outages);
+  txt('d-longest',    fmtDur(longest));
 
-  // ── Outage log table ──
+  // render outage log
   renderOutageLog(d.segments);
 
-  // show content first so SVG container has real width
+  // show panel so containers have real dimensions
   show('day-content');
 
-  // ── Timeline SVG — rendered after show so clientWidth is available ──
-  setTimeout(() => drawTimeline(d.segments, d.day_start_ts, d.day_end_ts), 50);
+  // timeline needs real width — defer slightly
+  setTimeout(() => drawTimeline(d.segments, d.day_start_ts, d.day_end_ts), 60);
 
-  // ── Hourly bar ──
-  const hours = Array.from({length: 24}, () => ({on: 0, total: 0}));
+  // hourly chart
+  const hours = Array.from({length:24}, ()=>({on:0,total:0}));
   d.pings.forEach(p => {
-    const h = new Date(p.ts * 1000).getHours();
+    const h = new Date(p.ts*1000).getHours();
     hours[h].total++;
-    if (p.status === 1) hours[h].on++;
+    if (p.status===1) hours[h].on++;
   });
+  const hLabels = hours.map((_,i)=>i===0?'12a':i<12?`${i}a`:i===12?'12p':`${i-12}p`);
+  const hData   = hours.map(h=>h.total?+((h.on/h.total)*100).toFixed(1):null);
 
-  const hLabels = hours.map((_, i) => i === 0 ? '12a' : i < 12 ? `${i}a` : i === 12 ? '12p' : `${i-12}p`);
-  const hData   = hours.map(h => h.total ? +((h.on / h.total) * 100).toFixed(1) : null);
-
-  destroyChart('day-hourly');
-  charts['day-hourly'] = new Chart(
-    document.getElementById('day-hourly-chart'),
-    {
-      type: 'bar',
-      data: {
-        labels: hLabels,
-        datasets: [{
-          data: hData,
-          backgroundColor: hData.map(barColor),
-          borderRadius: 4,
-          borderSkipped: false
-        }]
-      },
-      options: {
-        ...CHART_DEFAULTS,
-        plugins: {
-          ...CHART_DEFAULTS.plugins,
-          tooltip: { callbacks: { label: ctx => fmtPct(ctx.raw) } }
-        }
-      }
-    }
-  );
+  killChart('hourly');
+  charts['hourly'] = new Chart(document.getElementById('day-hourly-chart'), {
+    type:'bar',
+    data:{ labels:hLabels, datasets:[{ data:hData, backgroundColor:hData.map(barColor), borderRadius:4, borderSkipped:false }] },
+    options:{ ...CHART_OPT, plugins:{...CHART_OPT.plugins, tooltip:{callbacks:{label:ctx=>fmtPct(ctx.raw)}}} }
+  });
 }
 
 function renderOutageLog(segments) {
-  const container = document.getElementById('outage-log-body');
-
-  // Filter only OFF segments
-  const outages = segments.filter(s => s.status === 0);
-
-  if (outages.length === 0) {
-    container.innerHTML = '<div class="no-outages">✅ No outages recorded for this day!</div>';
+  const el = document.getElementById('outage-log-body');
+  const offs = segments.filter(s=>s.status===0);
+  if (!offs.length) {
+    el.innerHTML = '<div class="no-outages">✅ No outages recorded for this day!</div>';
     return;
   }
-
-  let html = `
-    <table class="outage-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Started</th>
-          <th>Restored</th>
-          <th>Duration</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  outages.forEach((seg, i) => {
-    const start = new Date(seg.start * 1000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
-    const end   = new Date(seg.end   * 1000).toLocaleTimeString('en-IN', {hour: '2-digit', minute: '2-digit', second: '2-digit'});
-    const dur   = fmtDur(seg.end - seg.start);
-    html += `
-      <tr>
-        <td class="num">${i + 1}</td>
-        <td class="time">❌ ${start}</td>
-        <td class="time">✅ ${end}</td>
-        <td class="dur">${dur}</td>
-      </tr>
-    `;
+  let html = '<table class="outage-table"><thead><tr><th>#</th><th>Power Cut At</th><th>Restored At</th><th>Duration</th></tr></thead><tbody>';
+  offs.forEach((seg,i) => {
+    const t1 = new Date(seg.start*1000).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const t2 = new Date(seg.end  *1000).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    html += `<tr>
+      <td class="num">${i+1}</td>
+      <td class="ton">❌ ${t1}</td>
+      <td class="toff">✅ ${t2}</td>
+      <td class="dur">${fmtDur(seg.end-seg.start)}</td>
+    </tr>`;
   });
-
   html += '</tbody></table>';
-  container.innerHTML = html;
+  el.innerHTML = html;
 }
 
 function drawTimeline(segments, dayStart, dayEnd) {
-  const svg      = document.getElementById('timeline-svg');
-  const container = document.getElementById('timeline-container');
-  const W        = container.clientWidth - 32 || 760;
-  const H        = 52;
-  const span     = dayEnd - dayStart;
+  const svg = document.getElementById('timeline-svg');
+  const con = document.getElementById('timeline-container');
+  const W   = con.clientWidth - 32;
+  const H   = 52;
+  const span= dayEnd - dayStart;
+  if (!W || !span) return;
 
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.setAttribute('preserveAspectRatio','none');
   svg.innerHTML = '';
 
-  // Background track
+  // background
   const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
-  Object.assign(bg, {});
-  bg.setAttribute('x', 0);      bg.setAttribute('y', 8);
-  bg.setAttribute('width', W);  bg.setAttribute('height', 36);
-  bg.setAttribute('fill', '#1e2235'); bg.setAttribute('rx', 5);
+  bg.setAttribute('x',0); bg.setAttribute('y',8); bg.setAttribute('width',W); bg.setAttribute('height',36);
+  bg.setAttribute('fill','#1e2235'); bg.setAttribute('rx',5);
   svg.appendChild(bg);
 
-  // Segments
+  // segments
   segments.forEach(seg => {
-    const x1 = ((seg.start - dayStart) / span) * W;
-    const x2 = ((seg.end   - dayStart) / span) * W;
-    const w  = Math.max(x2 - x1, 1);
-
-    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    rect.setAttribute('x', x1);    rect.setAttribute('y', 8);
-    rect.setAttribute('width', w); rect.setAttribute('height', 36);
-    rect.setAttribute('fill',    seg.status === 1 ? '#22c55e' : '#ef4444');
-    rect.setAttribute('opacity', seg.status === 1 ? '0.82'    : '0.72');
-
+    const x1 = ((seg.start-dayStart)/span)*W;
+    const x2 = ((seg.end  -dayStart)/span)*W;
+    const w  = Math.max(x2-x1, 1);
+    const r  = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x1); r.setAttribute('y',8); r.setAttribute('width',w); r.setAttribute('height',36);
+    r.setAttribute('fill', seg.status===1?'#22c55e':'#ef4444');
+    r.setAttribute('opacity', seg.status===1?'0.85':'0.75');
     const t = document.createElementNS('http://www.w3.org/2000/svg','title');
-    const st = new Date(seg.start * 1000).toLocaleTimeString();
-    const en = new Date(seg.end   * 1000).toLocaleTimeString();
-    t.textContent = `${seg.status ? '✅ ON' : '❌ OFF'} · ${st} → ${en} (${fmtDur(seg.end - seg.start)})`;
-    rect.appendChild(t);
-    svg.appendChild(rect);
+    t.textContent = `${seg.status?'✅ ON':'❌ OFF'} · ${new Date(seg.start*1000).toLocaleTimeString()} → ${new Date(seg.end*1000).toLocaleTimeString()} (${fmtDur(seg.end-seg.start)})`;
+    r.appendChild(t); svg.appendChild(r);
   });
 
-  // Hour grid lines
-  for (let h = 0; h <= 24; h += 3) {
-    const x = (h / 24) * W;
-    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-    line.setAttribute('x1', x); line.setAttribute('y1', 6);
-    line.setAttribute('x2', x); line.setAttribute('y2', 46);
-    line.setAttribute('stroke', '#2a2f4a'); line.setAttribute('stroke-width', 1);
-    svg.appendChild(line);
+  // hour lines
+  for (let h=0; h<=24; h+=3) {
+    const x = (h/24)*W;
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x); l.setAttribute('y1',6); l.setAttribute('x2',x); l.setAttribute('y2',46);
+    l.setAttribute('stroke','#2a2f4a'); l.setAttribute('stroke-width',1);
+    svg.appendChild(l);
   }
 }
 
-// ── MONTH ─────────────────────────────────────────────────────────────────────
-
+// ── MONTH ────────────────────────────────────────────────────
 async function loadMonth() {
-  const year  = document.getElementById('m-year').value;
-  const month = document.getElementById('m-month').value;
-
-  hide('month-content'); hide('month-nodata');
-  show('month-loading');
-
-  const d = await fetch(`/api/month?year=${year}&month=${month}`).then(r => r.json());
+  const year=document.getElementById('m-year').value, month=document.getElementById('m-month').value;
+  hide('month-content'); hide('month-nodata'); show('month-loading');
+  const d = await fetch(`/api/month?year=${year}&month=${month}`).then(r=>r.json());
   hide('month-loading');
-
-  const valid = d.days.filter(x => x.uptime_pct !== null);
+  const valid = d.days.filter(x=>x.uptime_pct!==null);
   if (!valid.length) { show('month-nodata'); return; }
-
-  const best  = valid.reduce((a,b) => a.uptime_pct > b.uptime_pct ? a : b);
-  const worst = valid.reduce((a,b) => a.uptime_pct < b.uptime_pct ? a : b);
-
-  text('m-avg',         fmtPct(d.avg_uptime_pct));
-  text('m-best',        `Day ${best.date.slice(8)}  —  ${fmtPct(best.uptime_pct)}`);
-  text('m-worst',       `Day ${worst.date.slice(8)}  —  ${fmtPct(worst.uptime_pct)}`);
-  text('m-outage-days', valid.filter(x => x.uptime_pct < 100).length + ' days');
-
-  const labels = d.days.map(x => +x.date.slice(8));
-  const vals   = d.days.map(x => x.uptime_pct);
-
-  destroyChart('month');
+  const best  = valid.reduce((a,b)=>a.uptime_pct>b.uptime_pct?a:b);
+  const worst = valid.reduce((a,b)=>a.uptime_pct<b.uptime_pct?a:b);
+  txt('m-avg',         fmtPct(d.avg_uptime_pct));
+  txt('m-best',        `Day ${best.date.slice(8)} — ${fmtPct(best.uptime_pct)}`);
+  txt('m-worst',       `Day ${worst.date.slice(8)} — ${fmtPct(worst.uptime_pct)}`);
+  txt('m-outage-days', valid.filter(x=>x.uptime_pct<100).length+' days');
+  const labels=d.days.map(x=>+x.date.slice(8)), vals=d.days.map(x=>x.uptime_pct);
+  killChart('month');
   charts['month'] = new Chart(document.getElementById('month-chart'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Uptime %',
-        data: vals,
-        backgroundColor: vals.map(barColor),
-        borderRadius: 4,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      plugins: {
-        ...CHART_DEFAULTS.plugins,
-        tooltip: { callbacks: { label: ctx => fmtPct(ctx.raw) } }
-      }
-    }
+    type:'bar',
+    data:{ labels, datasets:[{label:'Uptime %', data:vals, backgroundColor:vals.map(barColor), borderRadius:4, borderSkipped:false}] },
+    options:{ ...CHART_OPT, plugins:{...CHART_OPT.plugins, tooltip:{callbacks:{label:ctx=>fmtPct(ctx.raw)}}} }
   });
-
   show('month-content');
 }
 
-// ── YEAR ──────────────────────────────────────────────────────────────────────
-
+// ── YEAR ─────────────────────────────────────────────────────
 async function loadYear() {
-  const year = document.getElementById('y-year').value;
-
-  hide('year-content'); hide('year-nodata');
-  show('year-loading');
-
-  const d = await fetch(`/api/year?year=${year}`).then(r => r.json());
+  const year=document.getElementById('y-year').value;
+  hide('year-content'); hide('year-nodata'); show('year-loading');
+  const d = await fetch(`/api/year?year=${year}`).then(r=>r.json());
   hide('year-loading');
-
-  const valid = d.months.filter(x => x.uptime_pct !== null);
+  const valid = d.months.filter(x=>x.uptime_pct!==null);
   if (!valid.length) { show('year-nodata'); return; }
-
-  const best  = valid.reduce((a,b) => a.uptime_pct > b.uptime_pct ? a : b);
-  const worst = valid.reduce((a,b) => a.uptime_pct < b.uptime_pct ? a : b);
-
-  text('y-avg',   fmtPct(d.avg_uptime_pct));
-  text('y-best',  `${best.month_name}  —  ${fmtPct(best.uptime_pct)}`);
-  text('y-worst', `${worst.month_name}  —  ${fmtPct(worst.uptime_pct)}`);
-
-  const labels = d.months.map(x => x.month_name);
-  const vals   = d.months.map(x => x.uptime_pct);
-
-  destroyChart('year');
+  const best  = valid.reduce((a,b)=>a.uptime_pct>b.uptime_pct?a:b);
+  const worst = valid.reduce((a,b)=>a.uptime_pct<b.uptime_pct?a:b);
+  txt('y-avg',   fmtPct(d.avg_uptime_pct));
+  txt('y-best',  `${best.month_name} — ${fmtPct(best.uptime_pct)}`);
+  txt('y-worst', `${worst.month_name} — ${fmtPct(worst.uptime_pct)}`);
+  const labels=d.months.map(x=>x.month_name), vals=d.months.map(x=>x.uptime_pct);
+  killChart('year');
   charts['year'] = new Chart(document.getElementById('year-chart'), {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Uptime %',
-        data: vals,
-        backgroundColor: vals.map(barColor),
-        borderRadius: 4,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      ...CHART_DEFAULTS,
-      plugins: {
-        ...CHART_DEFAULTS.plugins,
-        tooltip: { callbacks: { label: ctx => fmtPct(ctx.raw) } }
-      }
-    }
+    type:'bar',
+    data:{ labels, datasets:[{label:'Uptime %', data:vals, backgroundColor:vals.map(barColor), borderRadius:4, borderSkipped:false}] },
+    options:{ ...CHART_OPT, plugins:{...CHART_OPT.plugins, tooltip:{callbacks:{label:ctx=>fmtPct(ctx.raw)}}} }
   });
-
   show('year-content');
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-
-(function init() {
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const todayStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
-
-  document.getElementById('day-picker').value = todayStr;
-  document.getElementById('m-year').value     = now.getFullYear();
-  document.getElementById('m-month').value    = now.getMonth() + 1;
-  document.getElementById('y-year').value     = now.getFullYear();
-
+// ── Init ─────────────────────────────────────────────────────
+(function(){
+  const now=new Date(), pad=n=>String(n).padStart(2,'0');
+  document.getElementById('day-picker').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  document.getElementById('m-year').value  = now.getFullYear();
+  document.getElementById('m-month').value = now.getMonth()+1;
+  document.getElementById('y-year').value  = now.getFullYear();
   loadDay();
 })();
 </script>
