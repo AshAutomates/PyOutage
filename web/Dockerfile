@@ -9,6 +9,7 @@ RUN pip install --no-cache-dir flask gunicorn
 
 COPY app.py .
 COPY templates/ templates/
+COPY config.json .
 
 EXPOSE 5000
 

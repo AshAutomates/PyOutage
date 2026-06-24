@@ -1,24 +1,135 @@
 from flask import Flask, render_template, jsonify, request
 import sqlite3
 import os
+import json
 import calendar
 from datetime import datetime, date
+from pathlib import Path
 
 app = Flask(__name__)
 
-DB_PATH = os.environ.get("DB_PATH", "/data/pyoutage.db")
-PLUG_IP = os.environ.get("PLUG_IP", "192.168.0.111")
+DB_PATH     = os.environ.get("DB_PATH",     "/data/pyoutage.db")
+CONFIG_PATH = os.environ.get("CONFIG_PATH", "/data/config.json")
+DEFAULT_CFG = "/app/config.json"
 
+
+# ── Config helpers ────────────────────────────────────────────────────────────
+
+def load_config():
+    for path in [CONFIG_PATH, DEFAULT_CFG]:
+        if Path(path).exists():
+            with open(path) as f:
+                return json.load(f)
+    return {
+        "plug_ip": "192.168.0.111",
+        "ping_interval": 3,
+        "ping_timeout": 1,
+        "confirm_failures": 2,
+        "heartbeat_seconds": 3600
+    }
+
+def save_config(cfg):
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(cfg, f, indent=2)
+
+
+# ── DB helper ─────────────────────────────────────────────────────────────────
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
+def has_any_data(conn, start_ts, end_ts):
+    row = conn.execute(
+        "SELECT COUNT(*) as c FROM ping_log WHERE timestamp BETWEEN ? AND ?",
+        (start_ts, end_ts)
+    ).fetchone()
+    return row["c"] > 0
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API: Live status
-# ─────────────────────────────────────────────────────────────────────────────
+def day_bounds(date_str):
+    d = datetime.strptime(date_str, "%Y-%m-%d")
+    return (
+        int(d.replace(hour=0,  minute=0,  second=0).timestamp()),
+        int(d.replace(hour=23, minute=59, second=59).timestamp())
+    )
+
+def get_outages_in_range(conn, start_ts, end_ts):
+    return conn.execute("""
+        SELECT outage_start, outage_end, duration_seconds, restored
+        FROM power_events
+        WHERE outage_start <= ? AND (outage_end >= ? OR outage_end IS NULL)
+        ORDER BY outage_start
+    """, (end_ts, start_ts)).fetchall()
+
+def outage_seconds_in_window(outages, start_ts, end_ts):
+    total = 0
+    for o in outages:
+        s = max(o["outage_start"], start_ts)
+        e = min(o["outage_end"] if o["outage_end"] else int(datetime.now().timestamp()), end_ts)
+        if e > s:
+            total += e - s
+    return total
+
+def compute_uptime(off_secs, start_ts, end_ts):
+    window = end_ts - start_ts
+    if window <= 0:
+        return None
+    return round(((window - min(off_secs, window)) / window) * 100, 2)
+
+def build_day_segments(outages, day_start, day_end):
+    if not outages:
+        return [{"start": day_start, "end": day_end, "status": 1}]
+    segments = []
+    cursor = day_start
+    for o in outages:
+        if o["start"] > cursor:
+            segments.append({"start": cursor, "end": o["start"], "status": 1})
+        segments.append({"start": o["start"], "end": o["end"], "status": 0})
+        cursor = o["end"]
+    if cursor < day_end:
+        segments.append({"start": cursor, "end": day_end, "status": 1})
+    return segments
+
+def fmt_dur(secs):
+    if not secs:
+        return "—"
+    h = secs // 3600
+    m = (secs % 3600) // 60
+    s = secs % 60
+    if h: return f"{h}h {m}m"
+    if m: return f"{m}m {s}s"
+    return f"{s}s"
+
+
+# ── API: Settings ─────────────────────────────────────────────────────────────
+
+@app.route("/api/config", methods=["GET"])
+def api_config_get():
+    return jsonify(load_config())
+
+@app.route("/api/config", methods=["POST"])
+def api_config_post():
+    try:
+        new_cfg = request.get_json()
+        # Validate
+        required = ["plug_ip", "ping_interval", "ping_timeout", "confirm_failures", "heartbeat_seconds"]
+        for k in required:
+            if k not in new_cfg:
+                return jsonify({"error": f"Missing field: {k}"}), 400
+
+        new_cfg["ping_interval"]     = int(new_cfg["ping_interval"])
+        new_cfg["ping_timeout"]      = int(new_cfg["ping_timeout"])
+        new_cfg["confirm_failures"]  = int(new_cfg["confirm_failures"])
+        new_cfg["heartbeat_seconds"] = int(new_cfg["heartbeat_seconds"])
+
+        save_config(new_cfg)
+        return jsonify({"ok": True, "config": new_cfg})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ── API: Live status ──────────────────────────────────────────────────────────
 
 @app.route("/api/status")
 def api_status():
@@ -27,90 +138,82 @@ def api_status():
         row = conn.execute(
             "SELECT status, timestamp FROM ping_log ORDER BY timestamp DESC LIMIT 1"
         ).fetchone()
+        ongoing = conn.execute(
+            "SELECT outage_start FROM power_events WHERE restored=0 ORDER BY outage_start DESC LIMIT 1"
+        ).fetchone()
         conn.close()
     except Exception:
-        return jsonify({"status": "unknown", "since": None, "ts": None})
+        return jsonify({"status": "unknown", "since": None})
 
     if not row:
-        return jsonify({"status": "unknown", "since": None, "ts": None})
+        return jsonify({"status": "unknown", "since": None})
 
+    current = "OFF" if ongoing else ("ON" if row["status"] == 1 else "OFF")
+    since_ts = ongoing["outage_start"] if ongoing else row["timestamp"]
     return jsonify({
-        "status": "ON" if row["status"] == 1 else "OFF",
-        "since":  datetime.fromtimestamp(row["timestamp"]).isoformat(),
-        "ts":     row["timestamp"]
+        "status":          current,
+        "since":           datetime.fromtimestamp(since_ts).isoformat(),
+        "ts":              since_ts,
+        "ongoing_outage":  bool(ongoing)
     })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API: Day view
-# ─────────────────────────────────────────────────────────────────────────────
+# ── API: Day ──────────────────────────────────────────────────────────────────
 
 @app.route("/api/day")
 def api_day():
-    """
-    Returns ping-by-ping data for one day, plus derived segments for timeline.
-    Query param: date=YYYY-MM-DD  (default: today)
-    """
     date_str = request.args.get("date", date.today().isoformat())
     try:
-        d = datetime.strptime(date_str, "%Y-%m-%d")
+        start_ts, end_ts = day_bounds(date_str)
     except ValueError:
-        return jsonify({"error": "Invalid date. Use YYYY-MM-DD"}), 400
-
-    start_ts = int(d.replace(hour=0,  minute=0,  second=0).timestamp())
-    end_ts   = int(d.replace(hour=23, minute=59, second=59).timestamp())
+        return jsonify({"error": "Invalid date"}), 400
 
     conn = get_db()
-    rows = conn.execute(
-        "SELECT timestamp, status FROM ping_log "
-        "WHERE timestamp BETWEEN ? AND ? ORDER BY timestamp",
-        (start_ts, end_ts)
-    ).fetchall()
+
+    if not has_any_data(conn, start_ts, end_ts):
+        conn.close()
+        return jsonify({"date": date_str, "has_data": False, "outages": [], "uptime_pct": None, "day_start_ts": start_ts, "day_end_ts": end_ts})
+
+    outages_raw = get_outages_in_range(conn, start_ts, end_ts)
     conn.close()
 
-    if not rows:
-        return jsonify({
-            "date": date_str, "pings": [], "segments": [],
-            "uptime_pct": None, "day_start_ts": start_ts, "day_end_ts": end_ts
-        })
+    off_secs = outage_seconds_in_window(outages_raw, start_ts, end_ts)
+    uptime   = compute_uptime(off_secs, start_ts, end_ts)
+    window   = end_ts - start_ts
 
-    pings = [{"ts": r["timestamp"], "status": r["status"]} for r in rows]
+    outage_list = []
+    for o in outages_raw:
+        s = max(o["outage_start"], start_ts)
+        e = min(o["outage_end"] if o["outage_end"] else int(datetime.now().timestamp()), end_ts)
+        outage_list.append({"start": s, "end": e, "duration": e - s, "ongoing": not o["restored"]})
 
-    total    = len(pings)
-    on_count = sum(1 for p in pings if p["status"] == 1)
-    uptime   = round((on_count / total) * 100, 2) if total else 0
+    segments = build_day_segments(outage_list, start_ts, end_ts)
 
-    # Build ON/OFF segments for the timeline bar
-    segments = []
-    seg_start  = pings[0]["ts"]
-    seg_status = pings[0]["status"]
-    for p in pings[1:]:
-        if p["status"] != seg_status:
-            segments.append({"start": seg_start, "end": p["ts"], "status": seg_status})
-            seg_start  = p["ts"]
-            seg_status = p["status"]
-    segments.append({"start": seg_start, "end": pings[-1]["ts"], "status": seg_status})
+    hourly = []
+    for h in range(24):
+        hs  = start_ts + h * 3600
+        he  = hs + 3600
+        off = outage_seconds_in_window(outages_raw, hs, he)
+        hourly.append({"hour": h, "uptime_pct": compute_uptime(off, hs, he)})
 
     return jsonify({
         "date":         date_str,
-        "pings":        pings,
+        "has_data":     True,
+        "outages":      outage_list,
         "segments":     segments,
         "uptime_pct":   uptime,
+        "off_seconds":  off_secs,
+        "on_seconds":   window - off_secs,
+        "hourly":       hourly,
         "day_start_ts": start_ts,
         "day_end_ts":   end_ts
     })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API: Month view
-# ─────────────────────────────────────────────────────────────────────────────
+# ── API: Month ────────────────────────────────────────────────────────────────
 
 @app.route("/api/month")
 def api_month():
-    """
-    Returns per-day uptime % for a given month.
-    Query params: year=YYYY, month=MM  (defaults: current month)
-    """
     today = date.today()
     try:
         year  = int(request.args.get("year",  today.year))
@@ -119,128 +222,96 @@ def api_month():
         return jsonify({"error": "Invalid year or month"}), 400
 
     last_day_num = calendar.monthrange(year, month)[1]
-    start_ts = int(datetime(year, month, 1).timestamp())
-    end_ts   = int(datetime(year, month, last_day_num, 23, 59, 59).timestamp())
+    month_start  = int(datetime(year, month, 1).timestamp())
+    month_end    = int(datetime(year, month, last_day_num, 23, 59, 59).timestamp())
 
     conn = get_db()
-    rows = conn.execute("""
-        SELECT
-            DATE(timestamp, 'unixepoch', 'localtime') AS day,
-            SUM(status)  AS on_count,
-            COUNT(*)     AS total
-        FROM ping_log
-        WHERE timestamp BETWEEN ? AND ?
-        GROUP BY day
-        ORDER BY day
-    """, (start_ts, end_ts)).fetchall()
-    conn.close()
-
-    data = {
-        r["day"]: round((r["on_count"] / r["total"]) * 100, 2)
-        for r in rows if r["total"]
-    }
+    outages = get_outages_in_range(conn, month_start, month_end)
 
     days = []
     for n in range(1, last_day_num + 1):
-        key = f"{year}-{month:02d}-{n:02d}"
-        days.append({"date": key, "uptime_pct": data.get(key)})
+        ds = int(datetime(year, month, n, 0,  0,  0).timestamp())
+        de = int(datetime(year, month, n, 23, 59, 59).timestamp())
+        if not has_any_data(conn, ds, de):
+            days.append({"date": f"{year}-{month:02d}-{n:02d}", "uptime_pct": None})
+            continue
+        off = outage_seconds_in_window(outages, ds, de)
+        days.append({"date": f"{year}-{month:02d}-{n:02d}", "uptime_pct": compute_uptime(off, ds, de)})
 
-    valid    = [d["uptime_pct"] for d in days if d["uptime_pct"] is not None]
-    avg      = round(sum(valid) / len(valid), 2) if valid else None
-
+    conn.close()
+    valid = [d["uptime_pct"] for d in days if d["uptime_pct"] is not None]
     return jsonify({
         "year": year, "month": month,
         "days": days,
-        "avg_uptime_pct": avg
+        "avg_uptime_pct": round(sum(valid)/len(valid), 2) if valid else None
     })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API: Year view
-# ─────────────────────────────────────────────────────────────────────────────
+# ── API: Year ─────────────────────────────────────────────────────────────────
 
 @app.route("/api/year")
 def api_year():
-    """
-    Returns per-month uptime % for a given year.
-    Query param: year=YYYY  (default: current year)
-    """
     try:
         year = int(request.args.get("year", date.today().year))
     except ValueError:
         return jsonify({"error": "Invalid year"}), 400
 
-    start_ts = int(datetime(year, 1,  1,  0,  0,  0).timestamp())
-    end_ts   = int(datetime(year, 12, 31, 23, 59, 59).timestamp())
+    year_start = int(datetime(year, 1,  1,  0,  0,  0).timestamp())
+    year_end   = int(datetime(year, 12, 31, 23, 59, 59).timestamp())
 
     conn = get_db()
-    rows = conn.execute("""
-        SELECT
-            STRFTIME('%Y-%m', timestamp, 'unixepoch', 'localtime') AS month,
-            SUM(status) AS on_count,
-            COUNT(*)    AS total
-        FROM ping_log
-        WHERE timestamp BETWEEN ? AND ?
-        GROUP BY month
-        ORDER BY month
-    """, (start_ts, end_ts)).fetchall()
-    conn.close()
-
-    data = {
-        r["month"]: round((r["on_count"] / r["total"]) * 100, 2)
-        for r in rows if r["total"]
-    }
+    outages = get_outages_in_range(conn, year_start, year_end)
 
     months = []
     for m in range(1, 13):
-        key = f"{year}-{m:02d}"
-        months.append({
-            "month":      key,
-            "month_name": calendar.month_abbr[m],
-            "uptime_pct": data.get(key)
-        })
+        last_day = calendar.monthrange(year, m)[1]
+        ms = int(datetime(year, m, 1).timestamp())
+        me = int(datetime(year, m, last_day, 23, 59, 59).timestamp())
+        if not has_any_data(conn, ms, me):
+            months.append({"month": f"{year}-{m:02d}", "month_name": calendar.month_abbr[m], "uptime_pct": None})
+            continue
+        off = outage_seconds_in_window(outages, ms, me)
+        months.append({"month": f"{year}-{m:02d}", "month_name": calendar.month_abbr[m], "uptime_pct": compute_uptime(off, ms, me)})
 
+    conn.close()
     valid = [m["uptime_pct"] for m in months if m["uptime_pct"] is not None]
-    avg   = round(sum(valid) / len(valid), 2) if valid else None
-
     return jsonify({
-        "year": year,
-        "months": months,
-        "avg_uptime_pct": avg
+        "year": year, "months": months,
+        "avg_uptime_pct": round(sum(valid)/len(valid), 2) if valid else None
     })
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# API: Available date range (for pickers)
-# ─────────────────────────────────────────────────────────────────────────────
+# ── API: Recent events ────────────────────────────────────────────────────────
 
-@app.route("/api/available")
-def api_available():
-    try:
-        conn = get_db()
-        row = conn.execute(
-            "SELECT MIN(timestamp) AS first, MAX(timestamp) AS last FROM ping_log"
-        ).fetchone()
-        conn.close()
-    except Exception:
-        return jsonify({"first_date": None, "last_date": None})
+@app.route("/api/events")
+def api_events():
+    limit = int(request.args.get("limit", 20))
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT outage_start, outage_end, duration_seconds, restored
+        FROM power_events ORDER BY outage_start DESC LIMIT ?
+    """, (limit,)).fetchall()
+    conn.close()
+    events = []
+    for r in rows:
+        events.append({
+            "outage_start":     r["outage_start"],
+            "outage_end":       r["outage_end"],
+            "duration_seconds": r["duration_seconds"],
+            "restored":         bool(r["restored"]),
+            "start_fmt":        datetime.fromtimestamp(r["outage_start"]).strftime("%d %b %Y %H:%M:%S"),
+            "end_fmt":          datetime.fromtimestamp(r["outage_end"]).strftime("%d %b %Y %H:%M:%S") if r["outage_end"] else "Ongoing",
+            "duration_fmt":     fmt_dur(r["duration_seconds"])
+        })
+    return jsonify({"events": events})
 
-    if not row or not row["first"]:
-        return jsonify({"first_date": None, "last_date": None})
 
-    return jsonify({
-        "first_date": datetime.fromtimestamp(row["first"]).date().isoformat(),
-        "last_date":  datetime.fromtimestamp(row["last"]).date().isoformat()
-    })
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Main page
-# ─────────────────────────────────────────────────────────────────────────────
+# ── Main page ─────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
-    return render_template("index.html", plug_ip=PLUG_IP)
+    cfg = load_config()
+    return render_template("index.html", plug_ip=cfg["plug_ip"])
 
 
 if __name__ == "__main__":

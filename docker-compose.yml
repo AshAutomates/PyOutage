@@ -3,61 +3,52 @@ version: "3.9"
 # ─────────────────────────────────────────────────────────────
 #  PyOutage — Power Cut Tracker
 #
-#  Services:
-#    poller  — pings smart plug every 5s, writes to SQLite
-#    web     — Flask dashboard, accessible on LAN
+#  To change plug IP without editing this file:
+#    → Open dashboard → Settings tab → change Plug IP → Save
+#    → Poller reloads automatically, no restart needed
 #
-#  Shared volume: pyoutage-data  (SQLite DB lives here)
-#
-#  Network: bridge mode with a fixed IP so you can bookmark it
-#  Default dashboard URL: http://192.168.0.200:5000
-#
-#  To change the plug IP or ping interval, edit the environment
-#  section under the poller service below.
+#  To change plug IP here (default before first run):
+#    → Edit config.json in the repo root
 # ─────────────────────────────────────────────────────────────
 
 networks:
   pyoutage-net:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16   # internal Docker subnet
 
 volumes:
   pyoutage-data:
 
 services:
 
-  # ── Poller ──────────────────────────────────────────────────
   poller:
     build:
       context: ./poller
     container_name: pyoutage-poller
     restart: unless-stopped
-    network_mode: host          # needs host network to reach LAN IP 192.168.0.111
+    network_mode: host
     environment:
-      PLUG_IP:       "192.168.0.111"   # ← your smart plug IP
-      PING_INTERVAL: "5"               # ← seconds between pings
-      DB_PATH:       "/data/pyoutage.db"
-      TZ:            "Asia/Kolkata"
+      DB_PATH:     "/data/pyoutage.db"
+      CONFIG_PATH: "/data/config.json"
+      HOOKS_DIR:   "/hooks"
+      TZ:          "Asia/Kolkata"
     volumes:
       - pyoutage-data:/data
+      - ./on_power_off:/hooks/on_power_off
+      - ./on_power_on:/hooks/on_power_on
 
-  # ── Web dashboard ────────────────────────────────────────────
   web:
     build:
       context: ./web
     container_name: pyoutage-web
     restart: unless-stopped
     networks:
-      pyoutage-net:
-        ipv4_address: 172.28.0.10   # internal; exposed via ports below
+      - pyoutage-net
     ports:
-      - "5000:5000"               # access at http://<your-computer-ip>:5000
+      - "5000:5000"
     environment:
-      PLUG_IP: "192.168.0.111"    # shown in the dashboard header
-      DB_PATH: "/data/pyoutage.db"
-      TZ:      "Asia/Kolkata"
+      DB_PATH:     "/data/pyoutage.db"
+      CONFIG_PATH: "/data/config.json"
+      TZ:          "Asia/Kolkata"
     volumes:
       - pyoutage-data:/data
     depends_on:
