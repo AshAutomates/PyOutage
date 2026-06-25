@@ -234,7 +234,7 @@
           <div class="hint">
             The IP address of your Power Lookout Device (smart plug, dev board, or any network device
             connected to main power). Change this if the device gets a new IP.
-            Poller reloads within one ping cycle — no restart needed.
+            Poller reloads within one ping cycle so no restart needed.
           </div>
         </div>
       </div>
@@ -253,7 +253,7 @@
         <div class="field">
           <label>Confirm Failures (consecutive pings)</label>
           <input type="number" id="cfg-confirm-failures" min="1" max="10"/>
-          <div class="hint">How many consecutive failures before logging as power OFF. Recommended: 2 — avoids false alarms from brief network hiccups.</div>
+          <div class="hint">How many consecutive failures before logging as power OFF. Recommended: 2, this avoids false alarms from brief network hiccups.</div>
         </div>
         <div class="field">
           <label>Heartbeat Interval (seconds)</label>
@@ -270,7 +270,7 @@
       <p class="sec" style="margin-bottom:10px">ℹ️ How settings work</p>
       <p style="font-size:0.85rem;color:var(--muted);line-height:1.8;">
         Settings save to <code style="color:var(--blue)">/data/config.json</code> in the Docker volume.<br/>
-        The poller checks for changes every ping cycle and <strong>reloads automatically</strong> — no Docker restart needed.<br/>
+        The poller checks for changes every ping cycle and <strong>reloads automatically</strong> so no Docker restart needed.<br/>
         New device IP takes effect within one ping cycle (~3 seconds).<br/>
         To set the default IP before first run, edit <code style="color:var(--blue)">config.json</code> in the repo.
       </p>
