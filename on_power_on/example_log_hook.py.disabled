@@ -7,7 +7,7 @@ Available environment variables:
   PYOUTAGE_EVENT          : POWER_ON
   PYOUTAGE_TIMESTAMP      : Human readable timestamp (IST)
   PYOUTAGE_UNIX_TS        : Unix timestamp (integer)
-  PYOUTAGE_PLUG_IP        : IP address of the smart plug
+  PYOUTAGE_LOOKOUT_IP        : IP address of the smart plug
   PYOUTAGE_OUTAGE_SECS    : How long the outage lasted in seconds (on POWER_ON only)
   PYOUTAGE_OUTAGE_DURATION: Human readable outage duration e.g. "1h 23m"
 """
@@ -17,7 +17,7 @@ from datetime import datetime
 event    = os.environ.get("PYOUTAGE_EVENT", "UNKNOWN")
 ts       = os.environ.get("PYOUTAGE_TIMESTAMP", str(datetime.now()))
 duration = os.environ.get("PYOUTAGE_OUTAGE_DURATION", "unknown")
-plug_ip  = os.environ.get("PYOUTAGE_PLUG_IP", "unknown")
+plug_ip  = os.environ.get("PYOUTAGE_LOOKOUT_IP", "unknown")
 
 log_path = "/data/event_log.txt"
 

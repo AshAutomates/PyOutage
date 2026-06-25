@@ -7,13 +7,13 @@ Track exactly when your power goes off and comes back on. Self-hosted, Docker-ba
 ## How it works
 
 ```
-Smart Plug (e.g. 192.168.0.111)          Your Computer (inverter-powered)
+Power Lookout Device (e.g. 192.168.0.111)          Your Computer (inverter-powered)
   connected to MAIN power only   ←ping every 3s─   Docker running PyOutage
   goes offline when power cuts                        logs events to SQLite
                                                       serves dashboard on :5000
 ```
 
-- Poller pings your smart plug every **3 seconds**
+- Poller pings your Power Lookout Device every **3 seconds**
 - Requires **2 consecutive failures** before logging as power OFF (avoids false alarms)
 - On status change → writes to DB + runs hook scripts
 - Every **1 hour** → writes a heartbeat (proves power was stable)
@@ -49,7 +49,7 @@ pyoutage/
 
 ### Prerequisites
 - Docker + Docker Compose installed
-- Smart plug connected to **main power only** (not inverter) with a known IP address
+- Power Lookout Device connected to **main power only** (not inverter) with a known IP address
 - This computer connected to inverter (always on)
 
 ### 1. Set your plug IP
@@ -58,7 +58,7 @@ pyoutage/
 ```json
 // config.json
 {
-  "plug_ip": "192.168.0.111",   ← change this to your plug's IP
+  "lookout_ip": "192.168.0.111",   ← change this to your plug's IP
   "ping_interval": 3,
   "ping_timeout": 1,
   "confirm_failures": 2,
@@ -102,7 +102,7 @@ ipconfig
 
 ## Changing the plug IP in future
 
-### If your smart plug gets a new IP address:
+### If your Power Lookout Device gets a new IP address:
 
 **Method 1 — Dashboard (easiest, no restart needed):**
 1. Open dashboard
@@ -152,7 +152,7 @@ import os
 event     = os.environ.get("PYOUTAGE_EVENT")           # "POWER_OFF" or "POWER_ON"
 timestamp = os.environ.get("PYOUTAGE_TIMESTAMP")       # "2026-06-23 14:30:00"
 unix_ts   = os.environ.get("PYOUTAGE_UNIX_TS")         # "1750000000"
-plug_ip   = os.environ.get("PYOUTAGE_PLUG_IP")         # "192.168.0.111"
+lookout_ip   = os.environ.get("PYOUTAGE_LOOKOUT_IP")         # "192.168.0.111"
 
 # Only available in on_power_on hooks:
 outage_secs     = os.environ.get("PYOUTAGE_OUTAGE_SECS")      # "825"

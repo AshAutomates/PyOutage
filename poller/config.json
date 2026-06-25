@@ -1,5 +1,5 @@
 {
-  "plug_ip": "192.168.0.111",
+  "lookout_ip": "192.168.0.111",
   "ping_interval": 3,
   "ping_timeout": 1,
   "confirm_failures": 2,

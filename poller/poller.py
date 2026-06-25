@@ -33,7 +33,7 @@ def load_config() -> dict:
                 return cfg
     # hardcoded fallback
     return {
-        "plug_ip":           "192.168.0.111",
+        "lookout_ip":           "192.168.0.111",
         "ping_interval":     3,
         "ping_timeout":      1,
         "confirm_failures":  2,
@@ -166,14 +166,14 @@ def main():
     init_db()
     cfg = load_config()
 
-    PLUG_IP           = cfg["plug_ip"]
+    LOOKOUT_IP           = cfg["lookout_ip"]
     PING_INTERVAL     = cfg["ping_interval"]
     PING_TIMEOUT      = cfg["ping_timeout"]
     CONFIRM_FAILURES  = cfg["confirm_failures"]
     HEARTBEAT_SECS    = cfg["heartbeat_seconds"]
 
     log.info(f"Poller started")
-    log.info(f"  Target IP       : {PLUG_IP}")
+    log.info(f"  Lookout Device IP       : {LOOKOUT_IP}")
     log.info(f"  Ping interval   : {PING_INTERVAL}s")
     log.info(f"  Ping timeout    : {PING_TIMEOUT}s")
     log.info(f"  Confirm failures: {CONFIRM_FAILURES} consecutive")
@@ -182,7 +182,7 @@ def main():
     # Record startup
     ts = int(time.time())
     conn = sqlite3.connect(DB_PATH)
-    initial = 1 if ping(PLUG_IP, PING_TIMEOUT) else 0
+    initial = 1 if ping(LOOKOUT_IP, PING_TIMEOUT) else 0
     write_ping_log(conn, ts, initial, "POLLER_START")
     conn.commit()
     conn.close()
@@ -199,16 +199,16 @@ def main():
             mtime = cfg_file.stat().st_mtime
             if mtime != last_cfg_mtime:
                 cfg              = load_config()
-                PLUG_IP          = cfg["plug_ip"]
+                LOOKOUT_IP          = cfg["lookout_ip"]
                 PING_INTERVAL    = cfg["ping_interval"]
                 PING_TIMEOUT     = cfg["ping_timeout"]
                 CONFIRM_FAILURES = cfg["confirm_failures"]
                 HEARTBEAT_SECS   = cfg["heartbeat_seconds"]
                 last_cfg_mtime   = mtime
-                log.info(f"Config reloaded — new plug IP: {PLUG_IP}")
+                log.info(f"Config reloaded — new Lookout Device IP: {LOOKOUT_IP}")
 
         ts    = int(time.time())
-        is_up = ping(PLUG_IP, PING_TIMEOUT)
+        is_up = ping(LOOKOUT_IP, PING_TIMEOUT)
 
         # ── Failure confirmation logic ──────────────────────────────────────
         # Only mark as OFF after N consecutive failures
@@ -238,7 +238,7 @@ def main():
                 "PYOUTAGE_EVENT":     f"POWER_{event_type}",
                 "PYOUTAGE_TIMESTAMP": fmt_ts(ts),
                 "PYOUTAGE_UNIX_TS":   ts,
-                "PYOUTAGE_PLUG_IP":   PLUG_IP,
+                "PYOUTAGE_LOOKOUT_IP":   LOOKOUT_IP,
             }
 
             if confirmed_status == 0:

@@ -21,7 +21,7 @@ def load_config():
             with open(path) as f:
                 return json.load(f)
     return {
-        "plug_ip": "192.168.0.111",
+        "lookout_ip": "192.168.0.111",
         "ping_interval": 3,
         "ping_timeout": 1,
         "confirm_failures": 2,
@@ -63,21 +63,31 @@ def get_outages_in_range(conn, start_ts, end_ts):
     """, (end_ts, start_ts)).fetchall()
 
 def outage_seconds_in_window(outages, start_ts, end_ts):
+    now = int(datetime.now().timestamp())
+    end_ts = min(end_ts, now)   # never count future time
+    if end_ts <= start_ts:
+        return 0
     total = 0
     for o in outages:
         s = max(o["outage_start"], start_ts)
-        e = min(o["outage_end"] if o["outage_end"] else int(datetime.now().timestamp()), end_ts)
+        e = min(o["outage_end"] if o["outage_end"] else now, end_ts)
         if e > s:
             total += e - s
     return total
 
 def compute_uptime(off_secs, start_ts, end_ts):
+    now = int(datetime.now().timestamp())
+    end_ts = min(end_ts, now)   # cap to now — no future time
     window = end_ts - start_ts
     if window <= 0:
-        return None
+        return None             # window hasn't started yet
     return round(((window - min(off_secs, window)) / window) * 100, 2)
 
 def build_day_segments(outages, day_start, day_end):
+    now     = int(datetime.now().timestamp())
+    day_end = min(day_end, now)   # don't draw future time
+    if day_end <= day_start:
+        return []
     if not outages:
         return [{"start": day_start, "end": day_end, "status": 1}]
     segments = []
@@ -85,8 +95,10 @@ def build_day_segments(outages, day_start, day_end):
     for o in outages:
         if o["start"] > cursor:
             segments.append({"start": cursor, "end": o["start"], "status": 1})
-        segments.append({"start": o["start"], "end": o["end"], "status": 0})
-        cursor = o["end"]
+        segments.append({"start": o["start"], "end": min(o["end"], day_end), "status": 0})
+        cursor = min(o["end"], day_end)
+        if cursor >= day_end:
+            break
     if cursor < day_end:
         segments.append({"start": cursor, "end": day_end, "status": 1})
     return segments
@@ -113,7 +125,7 @@ def api_config_post():
     try:
         new_cfg = request.get_json()
         # Validate
-        required = ["plug_ip", "ping_interval", "ping_timeout", "confirm_failures", "heartbeat_seconds"]
+        required = ["lookout_ip", "ping_interval", "ping_timeout", "confirm_failures", "heartbeat_seconds"]
         for k in required:
             if k not in new_cfg:
                 return jsonify({"error": f"Missing field: {k}"}), 400
@@ -311,7 +323,7 @@ def api_events():
 @app.route("/")
 def index():
     cfg = load_config()
-    return render_template("index.html", plug_ip=cfg["plug_ip"])
+    return render_template("index.html", lookout_ip=cfg["lookout_ip"])
 
 
 if __name__ == "__main__":
