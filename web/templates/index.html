@@ -115,7 +115,6 @@
 
 <header>
   <div class="logo">
-    <!-- Power symbol icon  -->
     <!-- Power symbol logo -->
     <svg class="logo-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="22" cy="22" r="20" fill="#1e2235" stroke="#3b4270" stroke-width="1"/>
@@ -125,7 +124,7 @@
 
     <div class="logo-text">
       <h1>Py<span>Outage</span></h1>
-      <p id="header-ip">Power Cut Tracker · {{ plug_ip }}</p>
+      <p id="header-ip">Power Cut Tracker · {{ lookout_ip }}</p>
     </div>
   </div>
   <div id="live-badge">
@@ -271,7 +270,7 @@
       <p style="font-size:0.85rem;color:var(--muted);line-height:1.8;">
         Settings save to <code style="color:var(--blue)">/data/config.json</code> in the Docker volume.<br/>
         The poller checks for changes every ping cycle and <strong>reloads automatically</strong> so no Docker restart needed.<br/>
-        New device IP takes effect within one ping cycle (~3 seconds).<br/>
+        New device IP takes effect within one ping cycle.<br/>
         To set the default IP before first run, edit <code style="color:var(--blue)">config.json</code> in the repo.
       </p>
     </div>
