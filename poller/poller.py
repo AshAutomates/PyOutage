@@ -29,11 +29,13 @@ def load_config() -> dict:
         if Path(path).exists():
             with open(path) as f:
                 cfg = json.load(f)
+                # backward compatibility — rename plug_ip to lookout_ip
+                if "plug_ip" in cfg and "lookout_ip" not in cfg:
+                    cfg["lookout_ip"] = cfg.pop("plug_ip")
                 log.info(f"Config loaded from {path}")
                 return cfg
-    # hardcoded fallback
     return {
-        "lookout_ip":           "192.168.0.111",
+        "lookout_ip":        "192.168.0.111",
         "ping_interval":     3,
         "ping_timeout":      1,
         "confirm_failures":  2,

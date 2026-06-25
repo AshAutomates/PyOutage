@@ -19,7 +19,11 @@ def load_config():
     for path in [CONFIG_PATH, DEFAULT_CFG]:
         if Path(path).exists():
             with open(path) as f:
-                return json.load(f)
+                cfg = json.load(f)
+                # backward compatibility — rename plug_ip to lookout_ip
+                if "plug_ip" in cfg and "lookout_ip" not in cfg:
+                    cfg["lookout_ip"] = cfg.pop("plug_ip")
+                return cfg
     return {
         "lookout_ip": "192.168.0.111",
         "ping_interval": 3,
