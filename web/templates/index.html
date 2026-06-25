@@ -114,24 +114,36 @@
 
 <header>
   <div class="logo">
-    <!-- Power symbol with Python snake wrapped around it -->
-    <svg class="logo-svg" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Outer glow circle -->
-      <circle cx="22" cy="22" r="20" fill="#1e2235" stroke="#3b4270" stroke-width="1"/>
-      <!-- Power symbol arc -->
-      <path d="M14 12 A12 12 0 1 0 30 12" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-      <!-- Power symbol vertical line -->
-      <line x1="22" y1="8" x2="22" y2="18" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round"/>
-      <!-- Snake body wrapping around -->
-      <path d="M 8 22 Q 6 14 12 10 Q 16 7 18 10 Q 20 13 16 15 Q 12 17 14 21 Q 16 25 20 24 Q 26 22 28 26 Q 30 30 26 33 Q 22 36 20 33 Q 18 30 22 29 Q 27 28 28 24"
-            stroke="#4ade80" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <!-- Snake head -->
-      <circle cx="29" cy="22" r="2" fill="#4ade80"/>
-      <!-- Snake tongue -->
-      <path d="M31 22 L33 21 M31 22 L33 23" stroke="#4ade80" stroke-width="1" stroke-linecap="round"/>
-      <!-- Snake eye -->
-      <circle cx="29.5" cy="21.2" r="0.5" fill="#0d0f18"/>
+    <!-- Power symbol icon  -->
+    <svg width="400" height="400" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <style>
+          .bg { fill: #0d1117; }
+          .outer-ring { stroke: #2a2f3a; fill: #1a1e27; stroke-width: 4; }
+          .flow-trace { stroke: #233044; stroke-width: 2; fill: none; stroke-dasharray: 4 8; }
+          .accent-ring { stroke: #3a4250; stroke-width: 1.5; fill: none; }
+          .core { fill: none; stroke: #8ac2f7; stroke-width: 14; stroke-linecap: round; filter: blur(2px); }
+          .glow { fill: none; stroke: #e0effe; stroke-width: 6; stroke-linecap: round; }
+        </style>
+      </defs>
+
+      <rect width="400" height="400" class="bg" />
+
+      <circle cx="200" cy="200" r="180" class="outer-ring" />
+
+      <circle cx="200" cy="200" r="155" class="flow-trace" />
+      <circle cx="200" cy="200" r="145" class="accent-ring" />
+      <circle cx="200" cy="200" r="135" class="flow-trace" />
+
+      <g transform="translate(200, 200)">
+        <path d="M -50 -50 A 70.7 70.7 0 1 0 50 -50" class="core" />
+        <path d="M -50 -50 A 70.7 70.7 0 1 0 50 -50" class="glow" />
+
+        <path d="M 0 -110 V -10" class="core" />
+        <path d="M 0 -110 V -10" class="glow" />
+      </g>
     </svg>
+
     <div class="logo-text">
       <h1>Py<span>Outage</span></h1>
       <p id="header-ip">Power Cut Tracker · {{ plug_ip }}</p>
