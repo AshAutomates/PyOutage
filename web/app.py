@@ -151,27 +151,46 @@ def api_config_post():
 def api_status():
     try:
         conn = get_db()
-        row = conn.execute(
-            "SELECT status, timestamp FROM ping_log ORDER BY timestamp DESC LIMIT 1"
-        ).fetchone()
+
+        # Check for ongoing outage first
         ongoing = conn.execute(
             "SELECT outage_start FROM power_events WHERE restored=0 ORDER BY outage_start DESC LIMIT 1"
         ).fetchone()
+
+        if ongoing:
+            # Power is OFF — since the outage started
+            conn.close()
+            return jsonify({
+                "status":         "OFF",
+                "since":          datetime.fromtimestamp(ongoing["outage_start"]).isoformat(),
+                "ts":             ongoing["outage_start"],
+                "ongoing_outage": True
+            })
+
+        # Power is ON — since the last restore event (or poller start if no outages)
+        last_restore = conn.execute(
+            "SELECT outage_end FROM power_events WHERE restored=1 ORDER BY outage_end DESC LIMIT 1"
+        ).fetchone()
+
+        if last_restore:
+            since_ts = last_restore["outage_end"]
+        else:
+            # No outages ever — since the first ping log entry
+            first = conn.execute(
+                "SELECT timestamp FROM ping_log ORDER BY timestamp ASC LIMIT 1"
+            ).fetchone()
+            since_ts = first["timestamp"] if first else int(datetime.now().timestamp())
+
         conn.close()
+        return jsonify({
+            "status":         "ON",
+            "since":          datetime.fromtimestamp(since_ts).isoformat(),
+            "ts":             since_ts,
+            "ongoing_outage": False
+        })
+
     except Exception:
         return jsonify({"status": "unknown", "since": None})
-
-    if not row:
-        return jsonify({"status": "unknown", "since": None})
-
-    current = "OFF" if ongoing else ("ON" if row["status"] == 1 else "OFF")
-    since_ts = ongoing["outage_start"] if ongoing else row["timestamp"]
-    return jsonify({
-        "status":          current,
-        "since":           datetime.fromtimestamp(since_ts).isoformat(),
-        "ts":              since_ts,
-        "ongoing_outage":  bool(ongoing)
-    })
 
 
 # ── API: Day ──────────────────────────────────────────────────────────────────

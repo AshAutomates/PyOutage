@@ -27,7 +27,7 @@
     .logo-text p{font-size:0.7rem;color:var(--muted);margin-top:1px;}
 
     /* ── Live badge ── */
-    #live-badge{display:flex;align-items:center;gap:14px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:12px 22px;min-width:220px;transition:border-color 0.4s;}
+    #live-badge{display:flex;align-items:center;gap:14px;background:var(--surface2);border:2px solid var(--border);border-radius:14px;padding:12px 22px;transition:border-color 0.4s;}
     #live-badge.on{border-color:#22c55e55;}
     #live-badge.off{border-color:#ef444455;}
     #live-dot{width:22px;height:22px;border-radius:50%;background:var(--muted);flex-shrink:0;}
@@ -270,7 +270,7 @@
       <p style="font-size:0.85rem;color:var(--muted);line-height:1.8;">
         Settings save to <code style="color:var(--blue)">/data/config.json</code> in the Docker volume.<br/>
         The poller checks for changes every ping cycle and <strong>reloads automatically</strong> so no Docker restart needed.<br/>
-        New device IP takes effect within one ping cycle.<br/>
+        New device IP takes effect within one ping cycle (~3 seconds).<br/>
         To set the default IP before first run, edit <code style="color:var(--blue)">config.json</code> in the repo.
       </p>
     </div>
@@ -311,13 +311,32 @@ async function pollLive(){
   try{
     const d=await fetch('/api/status').then(r=>r.json());
     const dot=document.getElementById('live-dot'),badge=document.getElementById('live-badge'),state=document.getElementById('live-state');
-    if(d.status==='ON'){dot.className='on';badge.className='on';state.textContent='Power ON';state.style.color='#22c55e';}
-    else if(d.status==='OFF'){dot.className='off';badge.className='off';state.textContent='Power OFF';state.style.color='#ef4444';}
-    else{dot.className='';badge.className='';state.textContent='Unknown';state.style.color='#64748b';}
-    document.getElementById('live-since').textContent=d.since?'since '+new Date(d.since).toLocaleTimeString():'';
+    if(d.status==='ON'){
+      dot.className='on';badge.className='on';
+      state.textContent='Power ON';state.style.color='#22c55e';
+      document.getElementById('live-since').textContent=d.since?'on since '+new Date(d.since).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'';
+    } else if(d.status==='OFF'){
+      dot.className='off';badge.className='off';
+      state.textContent='Power OFF';state.style.color='#ef4444';
+      document.getElementById('live-since').textContent=d.since?'off since '+new Date(d.since).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'';
+    } else{
+      dot.className='';badge.className='';
+      state.textContent='Unknown';state.style.color='#64748b';
+      document.getElementById('live-since').textContent='';
+    }
   }catch(_){}
 }
 setInterval(pollLive,5000);pollLive();
+
+// Auto-reload day view every 60s if viewing today
+function todayStr(){const n=new Date(),p=x=>String(x).padStart(2,'0');return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}`;}
+setInterval(()=>{
+  const picked=document.getElementById('day-picker').value;
+  const activeTab=document.querySelector('.tab-btn.active');
+  if(picked===todayStr() && activeTab && activeTab.textContent.includes('Day')){
+    loadDay();
+  }
+},60000);
 
 async function loadDay(){
   const date=document.getElementById('day-picker').value;
@@ -346,13 +365,13 @@ async function loadDay(){
 
 function renderOutageLog(outages){
   const el=document.getElementById('outage-log-body');
-  if(!outages.length){el.innerHTML='<div class="no-outages">✅ No outages recorded for this day!</div>';return;}
+  if(!outages.length){el.innerHTML='<div class="no-outages">No outages recorded for this day.</div>';return;}
   let html='<table class="outage-table"><thead><tr><th>#</th><th>Power Cut At</th><th>Restored At</th><th>Duration</th></tr></thead><tbody>';
   outages.forEach((o,i)=>{
     const t1=new Date(o.start*1000).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    const t2=o.ongoing?'Ongoing':new Date(o.end*1000).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const t2=o.ongoing?'—':new Date(o.end*1000).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     const badge=o.ongoing?'<span class="ongoing-badge">ONGOING</span>':'';
-    html+=`<tr><td class="num">${i+1}</td><td class="ton">❌ ${t1}</td><td class="toff">${o.ongoing?'⏳ '+t2:'✅ '+t2}${badge}</td><td class="dur">${fmtDur(o.duration)}</td></tr>`;
+    html+=`<tr><td class="num">${i+1}</td><td class="ton">${t1}</td><td class="toff">${t2}${badge}</td><td class="dur">${fmtDur(o.duration)}</td></tr>`;
   });
   el.innerHTML=html+'</tbody></table>';
 }
